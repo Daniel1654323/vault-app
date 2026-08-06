@@ -70,96 +70,90 @@ function App() {
   ).toFixed(2);
 
   return (
-    <div className="container" style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
-      <h2>Vault App</h2>
+    <div className="container">
+      <h2 className="app-title">Vault App</h2>
 
-      <div className="balance-board" style={{ margin: '20px 0', textAlign: 'center' }}>
-        <h4>היתרה שלך</h4>
-        <h1>₪{total}</h1>
-        <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '15px' }}>
-          <div>
-            <h4>הכנסות</h4>
-            <p style={{ color: 'green' }}>+₪{income}</p>
+      <div className="balance-board">
+        <span className="balance-label">היתרה שלך</span>
+        <h1 className="balance-amount">₪{total}</h1>
+        
+        <div className="stats-container">
+          <div className="stat-box income">
+            <span>הכנסות</span>
+            <p>+₪{income}</p>
           </div>
-          <div>
-            <h4>הוצאות</h4>
-            <p style={{ color: 'red' }}>-₪{expense}</p>
+          <div className="stat-box expense">
+            <span>הוצאות</span>
+            <p>-₪{expense}</p>
           </div>
         </div>
       </div>
 
-      <h3>הוסף פעולה חדשה</h3>
-      <form onSubmit={addTransaction} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <input
-          type="text"
-          placeholder="תיאור (למשל: סופר, משכורת)"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="סכום"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <label>
-            <input
-              type="radio"
-              value="expense"
-              checked={type === 'expense'}
-              onChange={() => type !== 'expense' && setType('expense')}
-            />
-            הוצאה
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="income"
-              checked={type === 'income'}
-              onChange={() => type !== 'income' && setType('income')}
-            />
-            הכנסה
-          </label>
-        </div>
-        <button type="submit">הוסף עסקה</button>
-      </form>
+      <div className="card">
+        <h3>הוסף פעולה חדשה</h3>
+        <form onSubmit={addTransaction} className="form-group">
+          <input
+            type="text"
+            className="input-field"
+            placeholder="תיאור (למשל: סופר, משכורת)"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <input
+            type="number"
+            className="input-field"
+            placeholder="סכום"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+          
+          <div className="radio-group">
+            <label className={`radio-label ${type === 'expense' ? 'active-expense' : ''}`}>
+              <input
+                type="radio"
+                value="expense"
+                checked={type === 'expense'}
+                onChange={() => setType('expense')}
+              />
+              הוצאה 🔴
+            </label>
+            <label className={`radio-label ${type === 'income' ? 'active-income' : ''}`}>
+              <input
+                type="radio"
+                value="income"
+                checked={type === 'income'}
+                onChange={() => setType('income')}
+              />
+              הכנסה 🟢
+            </label>
+          </div>
 
-      <h3 style={{ marginTop: '30px' }}>היסטוריית תנועות</h3>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {transactions.map((t) => (
-          <li
-            key={t.id}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '10px',
-              borderBottom: '1px solid #eee',
-              borderRight: `5px solid ${t.amount < 0 ? 'red' : 'green'}`,
-              marginBottom: '8px'
-            }}
-          >
-            <span>{t.text}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span>
-                {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount)}
-              </span>
-              <button
-                onClick={() => deleteTransaction(t.id)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
-                🗑️
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+          <button type="submit" className="submit-btn">הוסף עסקה</button>
+        </form>
+      </div>
+
+      <div className="card">
+        <h3>היסטוריית תנועות</h3>
+        {transactions.length === 0 ? (
+          <p className="empty-msg">אין עדיין תנועות להצגה</p>
+        ) : (
+          <ul className="history-list">
+            {transactions.map((t) => (
+              <li key={t.id} className={`history-item ${t.amount < 0 ? 'border-expense' : 'border-income'}`}>
+                <span className="item-text">{t.text}</span>
+                <div className="item-actions">
+                  <span className={`item-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
+                    {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount)}
+                  </span>
+                  <button onClick={() => deleteTransaction(t.id)} className="delete-btn" title="מחק">
+                    🗑️
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
