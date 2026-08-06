@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import './App.css';
 
-const CATEGORIES = [
+const INITIAL_CATEGORIES = [
   { id: 'food', name: 'אוכל וקניות', icon: '🛒' },
   { id: 'bills', name: 'חשבונות ודיור', icon: '🏠' },
   { id: 'transport', name: 'תחבורה ודלק', icon: '🚗' },
@@ -12,20 +12,94 @@ const CATEGORIES = [
 ];
 
 function App() {
-  const [userName, setUserName] = useState('דניאל');
+  const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  // מצב האם להציג מסך הרשמה (true) או התחברות (false)
+  const [authMode, setAuthMode] = useState('login'); // 'login' או 'signup'
+
+  // שדות טפסים
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+
   const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
-  const [category, setCategory] = useState('food');
+  const [category, setCategory] = useState('general');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
   
   const [activeTab, setActiveTab] = useState('home'); 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [formError, setFormError] = useState('');
+  
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatIcon, setNewCatIcon] = useState('🏷️');
 
   useEffect(() => {
-    fetchTransactions();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoadingAuth(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (session) {
+      fetchTransactions();
+    }
+  }, [session]);
+
+  // טיפול בהתחברות
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setAuthError('שגיאה בהתחברות: בדוק את האימייל והסיסמה');
+    }
+  };
+
+  // טיפול בהרשמה
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
+
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      setAuthSuccess('נרשמת בהצלחה! כעת תוכל להתחבר.');
+      setAuthMode('login');
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const fetchTransactions = async () => {
     const { data, error } = await supabase
@@ -36,28 +110,47 @@ function App() {
     if (error) {
       console.error('Error fetching transactions:', error);
     } else {
-      setTransactions(data || []);
+      const formattedData = (data || []).map(t => ({
+        ...t,
+        text: t.desc || ''
+      }));
+      setTransactions(formattedData);
     }
   };
 
   const addTransaction = async (e) => {
     e.preventDefault();
-    if (!text || !amount) return;
+    setFormError('');
+    if (!text.trim() || !amount) {
+      setFormError('נא למלא תיאור וסכום');
+      return;
+    }
 
     const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) {
+      setFormError('נא להזין סכום תקין');
+      return;
+    }
+
     const finalAmount = type === 'expense' ? -Math.abs(numAmount) : Math.abs(numAmount);
 
     const { data, error } = await supabase
       .from('transactions')
-      .insert([{ text, amount: finalAmount, category }])
+      .insert([{ desc: text.trim(), amount: finalAmount, category, type, user_id: session.user.id }])
       .select();
 
     if (error) {
       console.error('Error adding transaction:', error);
+      setFormError('שגיאה בשמירה במסד הנתונים: ' + error.message);
     } else if (data) {
-      setTransactions([data[0], ...transactions]);
+      const newTrans = {
+        ...data[0],
+        text: data[0].desc || text.trim()
+      };
+      setTransactions([newTrans, ...transactions]);
       setText('');
       setAmount('');
+      setFormError('');
       setShowAddModal(false);
       setActiveTab('home');
     }
@@ -76,17 +169,142 @@ function App() {
     }
   };
 
+  const handleAddCategory = (e) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+
+    const newId = 'cat_' + Date.now();
+    const newCategoryObj = {
+      id: newId,
+      name: newCatName.trim(),
+      icon: newCatIcon || '📦'
+    };
+
+    setCategories([...categories, newCategoryObj]);
+    setCategory(newId);
+    setNewCatName('');
+    setNewCatIcon('🏷️');
+    setShowCategoryModal(false);
+  };
+
+  if (loadingAuth) {
+    return <div style={{ textAlign: 'center', marginTop: '50px' }}>טוען...</div>;
+  }
+
+  // אם המשתמש לא מחובר - נציג דף התחברות או הרשמה נפרדים ונקיים
+  if (!session) {
+    return (
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc', padding: '20px' }}>
+        <div style={{ background: 'white', padding: '35px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', width: '100%', maxWidth: '400px' }}>
+          
+          <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+            <h1 style={{ fontSize: '24px', color: '#1e1b4b', marginBottom: '8px' }}>💰 Vault Project</h1>
+            <p style={{ color: '#64748b', fontSize: '14px' }}>ניהול תקציב חכם ומאובטח</p>
+          </div>
+
+          {authError && (
+            <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px', textAlign: 'center' }}>
+              {authError}
+            </div>
+          )}
+
+          {authSuccess && (
+            <div style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px', textAlign: 'center' }}>
+              {authSuccess}
+            </div>
+          )}
+
+          {authMode === 'login' ? (
+            /* --- דף התחברות --- */
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>התחברות לחשבון</h2>
+              <input
+                type="email"
+                placeholder="כתובת אימייל"
+                className="input-field"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="סיסמה"
+                className="input-field"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>
+                התחבר
+              </button>
+              
+              <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#64748b' }}>
+                עדיין אין לך חשבון?{' '}
+                <span 
+                  style={{ color: '#7c3aed', fontWeight: 'bold', cursor: 'pointer' }} 
+                  onClick={() => { setAuthMode('signup'); setAuthError(''); setAuthSuccess(''); }}
+                >
+                  הירשם כאן
+                </span>
+              </div>
+            </form>
+          ) : (
+            /* --- דף הרשמה --- */
+            <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>יצירת חשבון חדש</h2>
+              <input
+                type="text"
+                placeholder="שם מלא (למשל: דניאל)"
+                className="input-field"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+              <input
+                type="email"
+                placeholder="כתובת אימייל"
+                className="input-field"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="בחר סיסמה"
+                className="input-field"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>
+                הירשם
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#64748b' }}>
+                כבר יש לך חשבון?{' '}
+                <span 
+                  style={{ color: '#7c3aed', fontWeight: 'bold', cursor: 'pointer' }} 
+                  onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccess(''); }}
+                >
+                  התחבר כאן
+                </span>
+              </div>
+            </form>
+          )}
+
+        </div>
+      </div>
+    );
+  }
+
+  const userDisplayName = session.user.user_metadata?.full_name || session.user.email;
+
   const amounts = transactions.map((t) => t.amount);
   const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
-  const income = amounts
-    .filter((item) => item > 0)
-    .reduce((acc, item) => (acc += item), 0)
-    .toFixed(2);
-  const expense = (
-    amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) * -1
-  ).toFixed(2);
+  const income = amounts.filter((item) => item > 0).reduce((acc, item) => (acc += item), 0).toFixed(2);
+  const expense = (amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) * -1).toFixed(2);
 
-  const categoryTotals = CATEGORIES.map((cat) => {
+  const categoryTotals = categories.map((cat) => {
     const catTotal = transactions
       .filter((t) => (t.category || 'general') === cat.id && t.amount < 0)
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
@@ -99,18 +317,24 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* אזור עליון עם רקע סגול */}
       <div className="header-bg">
         <div className="container">
           <header className="app-header">
             <div>
-              <span className="greeting-sub">יום טוב 👋</span>
-              <h2 className="greeting-name">שלום, {userName}</h2>
+              <span className="greeting-sub">שלום רב 👋</span>
+              <h2 className="greeting-name" style={{ fontSize: '16px', fontWeight: 'bold', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {userDisplayName}
+              </h2>
             </div>
-            <div className="notification-bell">🔔</div>
+            <button 
+              type="button" 
+              onClick={handleLogout} 
+              style={{ background: '#dc2626', border: 'none', color: 'white', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+            >
+              התנתק
+            </button>
           </header>
 
-          {/* כרטיס יתרה מרחף */}
           <div className="balance-card-floating">
             <div className="balance-top-row">
               <span className="balance-label">יתרה בחשבון</span>
@@ -138,26 +362,21 @@ function App() {
         </div>
       </div>
 
-      {/* תוכן מרכזי */}
       <div className="container main-content">
-        
-        {/* טאב בית */}
         {activeTab === 'home' && (
           <>
             <div className="section-header">
               <h3>קטגוריות מובילות</h3>
-              <span className="see-all" onClick={() => setActiveTab('analytics')}>הצג הכל</span>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                  + הוסף קטגוריה
+                </button>
+                <span className="see-all" onClick={() => setActiveTab('analytics')}>הצג הכל</span>
+              </div>
             </div>
             <div className="categories-grid">
               {categoryTotals.slice(0, 4).map((cat) => (
-                <div
-                  key={cat.id}
-                  className="category-pill"
-                  onClick={() => {
-                    setSelectedCategoryFilter(cat.id);
-                    setActiveTab('analytics');
-                  }}
-                >
+                <div key={cat.id} className="category-pill" onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }}>
                   <span className="cat-icon">{cat.icon}</span>
                   <div className="cat-info">
                     <span className="cat-name">{cat.name}</span>
@@ -175,7 +394,7 @@ function App() {
             ) : (
               <ul className="bank-list">
                 {transactions.slice(0, 5).map((t) => {
-                  const catObj = CATEGORIES.find((c) => c.id === (t.category || 'general'));
+                  const catObj = categories.find((c) => c.id === (t.category || 'general'));
                   return (
                     <li key={t.id} className="bank-item">
                       <div className="bank-left">
@@ -199,25 +418,23 @@ function App() {
           </>
         )}
 
-        {/* טאב ניתוח / קטגוריות */}
         {activeTab === 'analytics' && (
           <div className="analytics-view">
             <div className="history-header">
               <h3>סיכום הוצאות לפי קטגוריות</h3>
-              {selectedCategoryFilter !== 'all' && (
-                <button className="reset-filter-btn" onClick={() => setSelectedCategoryFilter('all')}>
-                  איפוס סינון
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                  + הוסף קטגוריה
                 </button>
-              )}
+                {selectedCategoryFilter !== 'all' && (
+                  <button className="reset-filter-btn" onClick={() => setSelectedCategoryFilter('all')}>איפוס סינון</button>
+                )}
+              </div>
             </div>
 
             <div className="categories-full-grid">
               {categoryTotals.map((cat) => (
-                <div
-                  key={cat.id}
-                  className={`category-box-card ${selectedCategoryFilter === cat.id ? 'active' : ''}`}
-                  onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === cat.id ? 'all' : cat.id)}
-                >
+                <div key={cat.id} className={`category-box-card ${selectedCategoryFilter === cat.id ? 'active' : ''}`} onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === cat.id ? 'all' : cat.id)}>
                   <span className="cat-box-icon">{cat.icon}</span>
                   <span className="cat-box-name">{cat.name}</span>
                   <span className="cat-box-amount">₪{cat.total.toFixed(2)}</span>
@@ -231,7 +448,7 @@ function App() {
             
             <ul className="bank-list">
               {filteredTransactions.map((t) => {
-                const catObj = CATEGORIES.find((c) => c.id === (t.category || 'general'));
+                const catObj = categories.find((c) => c.id === (t.category || 'general'));
                 return (
                   <li key={t.id} className="bank-item">
                     <div className="bank-left">
@@ -254,30 +471,38 @@ function App() {
           </div>
         )}
 
-        {/* טאב פרופיל */}
         {activeTab === 'profile' && (
           <div className="profile-card">
             <div className="profile-avatar-large">👤</div>
-            <h2>{userName}</h2>
-            <p className="profile-email">משתמש פרימיום</p>
-            <div className="profile-settings-list">
-              <div className="setting-item">⚙️ הגדרות חשבון</div>
-              <div className="setting-item">🔒 אבטחה ופרטיות</div>
-              <div className="setting-item">💳 ניהול אמצעי תשלום</div>
+            <h2>{userDisplayName}</h2>
+            <p className="profile-email">{session.user.email}</p>
+            <div className="profile-settings-list" style={{ marginTop: '20px' }}>
+              <button 
+                type="button" 
+                onClick={handleLogout} 
+                style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
+              >
+                🚪 התנתק מהמערכת
+              </button>
             </div>
           </div>
         )}
-
       </div>
 
-      {/* מודל הוספת פעולה */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>הוספת פעולה חדשה</h3>
-              <button className="close-modal-btn" onClick={() => setShowAddModal(false)}>✕</button>
+              <button type="button" className="close-modal-btn" onClick={() => setShowAddModal(false)}>✕</button>
             </div>
+            
+            {formError && (
+              <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '13px' }}>
+                {formError}
+              </div>
+            )}
+
             <form onSubmit={addTransaction} className="form-group">
               <input
                 type="text"
@@ -289,6 +514,7 @@ function App() {
               />
               <input
                 type="number"
+                step="any"
                 className="input-field"
                 placeholder="סכום (₪)"
                 value={amount}
@@ -296,31 +522,13 @@ function App() {
               />
 
               <div className="radio-group">
-                <button
-                  type="button"
-                  className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`}
-                  onClick={() => setType('expense')}
-                >
-                  הוצאה
-                </button>
-                <button
-                  type="button"
-                  className={`type-btn ${type === 'income' ? 'active-income' : ''}`}
-                  onClick={() => setType('income')}
-                >
-                  הכנסה
-                </button>
+                <button type="button" className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`} onClick={() => setType('expense')}>הוצאה</button>
+                <button type="button" className={`type-btn ${type === 'income' ? 'active-income' : ''}`} onClick={() => setType('income')}>הכנסה</button>
               </div>
 
-              <select
-                className="input-field select-field"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </option>
+              <select className="input-field select-field" value={category} onChange={(e) => setCategory(e.target.value)}>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
                 ))}
               </select>
 
@@ -330,44 +538,73 @@ function App() {
         </div>
       )}
 
-      {/* תפריט ניווט תחתון */}
-      <nav className="bottom-nav">
-        <button 
-          className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('home'); setShowAddModal(false); }}
-        >
-          <span className="nav-icon">🏠</span>
-          <span className="nav-text">בית</span>
-        </button>
-
-        <button 
-          className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('analytics'); setShowAddModal(false); }}
-        >
-          <span className="nav-icon">📊</span>
-          <span className="nav-text">ניתוח</span>
-        </button>
-
-        <div className="nav-center-btn-wrapper">
-          <button className="center-add-btn" onClick={() => setShowAddModal(true)}>
-            +
-          </button>
+      {showCategoryModal && (
+        <div className="modal-overlay" onClick={() => setShowCategoryModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>הוספת קטגוריה חדשה</h3>
+              <button type="button" className="close-modal-btn" onClick={() => setShowCategoryModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleAddCategory} className="form-group">
+              <input
+                type="text"
+                className="input-field"
+                placeholder="שם הקטגוריה (למשל: חיות מחמד)"
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                autoFocus
+                required
+              />
+              <input
+                type="text"
+                className="input-field"
+                placeholder="אייקון או אימוג'י (למשל: 🐱)"
+                value={newCatIcon}
+                onChange={(e) => setNewCatIcon(e.target.value)}
+                maxLength={4}
+              />
+              <button type="submit" className="submit-btn">צור קטגוריה</button>
+            </form>
+          </div>
         </div>
+      )}
 
-        <button 
-          className={`nav-item ${activeTab === 'wallet' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('analytics'); setShowAddModal(false); }}
-        >
-          <span className="nav-icon">💳</span>
+      <nav className="bottom-nav">
+        <button type="button" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => { setActiveTab('profile'); }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span className="nav-text">פרופיל</span>
+        </button>
+
+        <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+          </svg>
           <span className="nav-text">ארנק</span>
         </button>
 
-        <button 
-          className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('profile'); setShowAddModal(false); }}
-        >
-          <span className="nav-icon">👤</span>
-          <span className="nav-text">פרופיל</span>
+        <div className="nav-center-btn-wrapper">
+          <button type="button" className="center-add-btn" onClick={() => { setFormError(''); setShowAddModal(true); }}>+</button>
+        </div>
+
+        <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span className="nav-text">ניתוח</span>
+        </button>
+
+        <button type="button" className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => { setActiveTab('home'); }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span className="nav-text">בית</span>
         </button>
       </nav>
     </div>
