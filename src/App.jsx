@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient';
 import './App.css';
 
 function App() {
+  const [userName, setUserName] = useState('משתמש');
   const [transactions, setTransactions] = useState([]);
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
@@ -71,26 +72,35 @@ function App() {
 
   return (
     <div className="container">
-      <h2 className="app-title">Vault App</h2>
+      {/* כותרת קבלת פנים פרופיל */}
+      <header className="app-header">
+        <div>
+          <span className="greeting-sub">שלום וברכה 👋</span>
+          <h2 className="greeting-name">ברוך הבא, {userName}</h2>
+        </div>
+        <div className="avatar">👤</div>
+      </header>
 
+      {/* כרטיס יתרה ראשי */}
       <div className="balance-board">
-        <span className="balance-label">היתרה שלך</span>
+        <span className="balance-label">יתרה כוללת</span>
         <h1 className="balance-amount">₪{total}</h1>
-        
+
         <div className="stats-container">
           <div className="stat-box income">
-            <span>הכנסות</span>
+            <span>הכנסות 🟢</span>
             <p>+₪{income}</p>
           </div>
           <div className="stat-box expense">
-            <span>הוצאות</span>
+            <span>הוצאות 🔴</span>
             <p>-₪{expense}</p>
           </div>
         </div>
       </div>
 
+      {/* טופס הוספה */}
       <div className="card">
-        <h3>הוסף פעולה חדשה</h3>
+        <h3>הוספת פעולה חדשה</h3>
         <form onSubmit={addTransaction} className="form-group">
           <input
             type="text"
@@ -102,50 +112,52 @@ function App() {
           <input
             type="number"
             className="input-field"
-            placeholder="סכום"
+            placeholder="סכום (₪)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          
+
           <div className="radio-group">
-            <label className={`radio-label ${type === 'expense' ? 'active-expense' : ''}`}>
-              <input
-                type="radio"
-                value="expense"
-                checked={type === 'expense'}
-                onChange={() => setType('expense')}
-              />
-              הוצאה 🔴
-            </label>
-            <label className={`radio-label ${type === 'income' ? 'active-income' : ''}`}>
-              <input
-                type="radio"
-                value="income"
-                checked={type === 'income'}
-                onChange={() => setType('income')}
-              />
-              הכנסה 🟢
-            </label>
+            <button
+              type="button"
+              className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`}
+              onClick={() => setType('expense')}
+            >
+              הוצאה
+            </button>
+            <button
+              type="button"
+              className={`type-btn ${type === 'income' ? 'active-income' : ''}`}
+              onClick={() => setType('income')}
+            >
+              הכנסה
+            </button>
           </div>
 
-          <button type="submit" className="submit-btn">הוסף עסקה</button>
+          <button type="submit" className="submit-btn">
+            + שמור פעולה
+          </button>
         </form>
       </div>
 
+      {/* היסטוריית תנועות */}
       <div className="card">
-        <h3>היסטוריית תנועות</h3>
+        <h3>פעולות אחרונות</h3>
         {transactions.length === 0 ? (
-          <p className="empty-msg">אין עדיין תנועות להצגה</p>
+          <p className="empty-msg">אין עדיין תנועות ברשימה</p>
         ) : (
           <ul className="history-list">
             {transactions.map((t) => (
-              <li key={t.id} className={`history-item ${t.amount < 0 ? 'border-expense' : 'border-income'}`}>
-                <span className="item-text">{t.text}</span>
+              <li key={t.id} className="history-item">
+                <div className="item-info">
+                  <span className="item-icon">{t.amount < 0 ? '💸' : '💰'}</span>
+                  <span className="item-text">{t.text}</span>
+                </div>
                 <div className="item-actions">
                   <span className={`item-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
                     {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount)}
                   </span>
-                  <button onClick={() => deleteTransaction(t.id)} className="delete-btn" title="מחק">
+                  <button onClick={() => deleteTransaction(t.id)} className="delete-btn">
                     🗑️
                   </button>
                 </div>
