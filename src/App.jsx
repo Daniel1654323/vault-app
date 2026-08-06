@@ -2,12 +2,23 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import './App.css';
 
+const CATEGORIES = [
+  { id: 'food', name: 'אוכל וקניות', icon: '🛒' },
+  { id: 'bills', name: 'חשבונות ודיור', icon: '🏠' },
+  { id: 'transport', name: 'תחבורה ודלק', icon: '🚗' },
+  { id: 'entertainment', name: 'בילויים ופנאי', icon: '🎬' },
+  { id: 'salary', name: 'משכורת והכנסה', icon: '💰' },
+  { id: 'general', name: 'כללי', icon: '📦' }
+];
+
 function App() {
-  const [userName, setUserName] = useState('משתמש');
+  const [userName, setUserName] = useState('דניאל');
   const [transactions, setTransactions] = useState([]);
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
+  const [category, setCategory] = useState('food');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
 
   useEffect(() => {
     fetchTransactions();
@@ -35,7 +46,7 @@ function App() {
 
     const { data, error } = await supabase
       .from('transactions')
-      .insert([{ text, amount: finalAmount }])
+      .insert([{ text, amount: finalAmount, category }])
       .select();
 
     if (error) {
@@ -70,9 +81,20 @@ function App() {
     amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) * -1
   ).toFixed(2);
 
+  // חישוב הוצאות לפי קטגוריה
+  const categoryTotals = CATEGORIES.map((cat) => {
+    const catTotal = transactions
+      .filter((t) => (t.category || 'general') === cat.id && t.amount < 0)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    return { ...cat, total: catTotal };
+  });
+
+  const filteredTransactions = selectedCategoryFilter === 'all'
+    ? transactions
+    : transactions.filter((t) => (t.category || 'general') === selectedCategoryFilter);
+
   return (
     <div className="container">
-      {/* כותרת קבלת פנים פרופיל */}
       <header className="app-header">
         <div>
           <span className="greeting-sub">שלום וברכה 👋</span>
@@ -81,11 +103,10 @@ function App() {
         <div className="avatar">👤</div>
       </header>
 
-      {/* כרטיס יתרה ראשי */}
+      {/* כרטיס יתרה */}
       <div className="balance-board">
-        <span className="balance-label">יתרה כוללת</span>
+        <span className="balance-label">יתרה בחשבון</span>
         <h1 className="balance-amount">₪{total}</h1>
-
         <div className="stats-container">
           <div className="stat-box income">
             <span>הכנסות 🟢</span>
@@ -98,6 +119,24 @@ function App() {
         </div>
       </div>
 
+      {/* פירוט קטגוריות */}
+      <div className="card">
+        <h3>סיכום לפי קטגוריות</h3>
+        <div className="categories-grid">
+          {categoryTotals.map((cat) => (
+            <div
+              key={cat.id}
+              className={`category-card ${selectedCategoryFilter === cat.id ? 'active' : ''}`}
+              onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === cat.id ? 'all' : cat.id)}
+            >
+              <span className="cat-icon">{cat.icon}</span>
+              <span className="cat-name">{cat.name}</span>
+              <span className="cat-amount">₪{cat.total.toFixed(0)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* טופס הוספה */}
       <div className="card">
         <h3>הוספת פעולה חדשה</h3>
@@ -105,7 +144,7 @@ function App() {
           <input
             type="text"
             className="input-field"
-            placeholder="תיאור (למשל: סופר, משכורת)"
+            placeholder="תיאור (למשל: שופרסל, תדלוק)"
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
@@ -134,35 +173,61 @@ function App() {
             </button>
           </div>
 
+          <select
+            className="input-field select-field"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.icon} {cat.name}
+              </option>
+            ))}
+          </select>
+
           <button type="submit" className="submit-btn">
             + שמור פעולה
           </button>
         </form>
       </div>
 
-      {/* היסטוריית תנועות */}
+      {/* תצוגת עו"ש בנקאית */}
       <div className="card">
-        <h3>פעולות אחרונות</h3>
-        {transactions.length === 0 ? (
-          <p className="empty-msg">אין עדיין תנועות ברשימה</p>
+        <div className="history-header">
+          <h3>תנועות בחשבון (עו"ש)</h3>
+          {selectedCategoryFilter !== 'all' && (
+            <button className="reset-filter-btn" onClick={() => setSelectedCategoryFilter('all')}>
+              הצג הכל
+            </button>
+          )}
+        </div>
+
+        {filteredTransactions.length === 0 ? (
+          <p className="empty-msg">אין תנועות להצגה בקטגוריה זו</p>
         ) : (
-          <ul className="history-list">
-            {transactions.map((t) => (
-              <li key={t.id} className="history-item">
-                <div className="item-info">
-                  <span className="item-icon">{t.amount < 0 ? '💸' : '💰'}</span>
-                  <span className="item-text">{t.text}</span>
-                </div>
-                <div className="item-actions">
-                  <span className={`item-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
-                    {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount)}
-                  </span>
-                  <button onClick={() => deleteTransaction(t.id)} className="delete-btn">
-                    🗑️
-                  </button>
-                </div>
-              </li>
-            ))}
+          <ul className="bank-list">
+            {filteredTransactions.map((t) => {
+              const catObj = CATEGORIES.find((c) => c.id === (t.category || 'general'));
+              return (
+                <li key={t.id} className="bank-item">
+                  <div className="bank-left">
+                    <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
+                    <div className="bank-details">
+                      <span className="bank-text">{t.text}</span>
+                      <span className="bank-subtext">{catObj ? catObj.name : 'כללי'}</span>
+                    </div>
+                  </div>
+                  <div className="bank-right">
+                    <span className={`bank-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
+                      {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount).toFixed(2)}
+                    </span>
+                    <button onClick={() => deleteTransaction(t.id)} className="delete-btn">
+                      🗑️
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
