@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import './App.css';
 
-const INITIAL_CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: 'food', name: 'אוכל וקניות', icon: '🛒' },
   { id: 'bills', name: 'חשבונות ודיור', icon: '🏠' },
   { id: 'transport', name: 'תחבורה ודלק', icon: '🚗' },
   { id: 'entertainment', name: 'בילויים ופנאי', icon: '🎬' },
-  { id: 'salary', name: 'משכורת והכנסה', icon: '💰' },
   { id: 'general', name: 'כללי', icon: '📦' }
 ];
 
@@ -33,13 +32,21 @@ function App() {
   const [authSuccess, setAuthSuccess] = useState('');
 
   const [transactions, setTransactions] = useState([]);
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   
+  // טופס הוספת תנועה
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
   const [category, setCategory] = useState('general');
   const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [transDate, setTransDate] = useState(new Date().toISOString().slice(0, 10));
+
+  // סינונים וחיפוש
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPaymentFilter, setSelectedPaymentFilter] = useState('all');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
   
   const [activeTab, setActiveTab] = useState('home'); 
@@ -95,9 +102,7 @@ function App() {
       email,
       password,
       options: {
-        data: {
-          full_name: fullName,
-        },
+        data: { full_name: fullName },
       },
     });
 
@@ -125,7 +130,9 @@ function App() {
       const formattedData = (data || []).map(t => ({
         ...t,
         text: t.desc || '',
-        paymentMethod: t.payment_method || 'credit_card'
+        paymentMethod: t.payment_method || 'credit_card',
+        date: t.date || new Date().toISOString().slice(0, 10),
+        isRecurring: t.is_recurring || false
       }));
       setTransactions(formattedData);
     }
@@ -155,6 +162,8 @@ function App() {
         category, 
         type, 
         payment_method: paymentMethod,
+        date: transDate,
+        is_recurring: isRecurring,
         user_id: session.user.id 
       }])
       .select();
@@ -166,11 +175,14 @@ function App() {
       const newTrans = {
         ...data[0],
         text: data[0].desc || text.trim(),
-        paymentMethod: data[0].payment_method || paymentMethod
+        paymentMethod: data[0].payment_method || paymentMethod,
+        date: data[0].date || transDate,
+        isRecurring: data[0].is_recurring || isRecurring
       };
       setTransactions([newTrans, ...transactions]);
       setText('');
       setAmount('');
+      setIsRecurring(false);
       setFormError('');
       setShowAddModal(false);
       setActiveTab('home');
@@ -208,6 +220,33 @@ function App() {
     setShowCategoryModal(false);
   };
 
+  const handleAddRecurringTransactions = async () => {
+    const recurringItems = transactions.filter(t => t.is_recurring);
+    if (recurringItems.length === 0) {
+      alert('אין תנועות קבועות מוגדרות במערכת.');
+      return;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    for (const item of recurringItems) {
+      const existsThisMonth = transactions.some(t => t.text === item.text && t.date?.slice(0, 7) === todayStr.slice(0, 7));
+      if (!existsThisMonth) {
+        await supabase.from('transactions').insert([{
+          desc: item.text,
+          amount: item.amount,
+          category: item.category,
+          type: item.type,
+          payment_method: item.paymentMethod,
+          date: todayStr,
+          is_recurring: true,
+          user_id: session.user.id
+        }]);
+      }
+    }
+    fetchTransactions();
+    alert('התנועות הקבועות נוספו בהצלחה לחודש הנוכחי!');
+  };
+
   if (loadingAuth) {
     return <div style={{ textAlign: 'center', marginTop: '50px' }}>טוען...</div>;
   }
@@ -237,87 +276,32 @@ function App() {
           {authMode === 'login' ? (
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>התחברות לחשבון</h2>
-              <input
-                type="email"
-                placeholder="כתובת אימייל"
-                className="input-field"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <input
-                type="password"
-                placeholder="סיסמה"
-                className="input-field"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input type="password" placeholder="סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required />
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  id="remember" 
-                  checked={rememberMe} 
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
-                />
+                <input type="checkbox" id="remember" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }} />
                 <label htmlFor="remember" style={{ cursor: 'pointer' }}>זכור אותי במכשיר זה</label>
               </div>
 
-              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>
-                התחבר
-              </button>
+              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>התחבר</button>
               
               <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#64748b' }}>
                 עדיין אין לך חשבון?{' '}
-                <span 
-                  style={{ color: '#7c3aed', fontWeight: 'bold', cursor: 'pointer' }} 
-                  onClick={() => { setAuthMode('signup'); setAuthError(''); setAuthSuccess(''); }}
-                >
-                  הירשם כאן
-                </span>
+                <span style={{ color: '#7c3aed', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => { setAuthMode('signup'); setAuthError(''); setAuthSuccess(''); }}>הירשם כאן</span>
               </div>
             </form>
           ) : (
             <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>יצירת חשבון חדש</h2>
-              <input
-                type="text"
-                placeholder="שם מלא (למשל: דניאל)"
-                className="input-field"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-              <input
-                type="email"
-                placeholder="כתובת אימייל"
-                className="input-field"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <input
-                type="password"
-                placeholder="בחר סיסמה"
-                className="input-field"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>
-                הירשם
-              </button>
+              <input type="text" placeholder="שם מלא" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input type="password" placeholder="בחר סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>הירשם</button>
 
               <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#64748b' }}>
                 כבר יש לך חשבון?{' '}
-                <span 
-                  style={{ color: '#7c3aed', fontWeight: 'bold', cursor: 'pointer' }} 
-                  onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccess(''); }}
-                >
-                  התחבר כאן
-                </span>
+                <span style={{ color: '#7c3aed', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccess(''); }}>התחבר כאן</span>
               </div>
             </form>
           )}
@@ -328,24 +312,30 @@ function App() {
   }
 
   const userDisplayName = session.user.user_metadata?.full_name || session.user.email;
+  const availableMonths = Array.from(new Set(transactions.map(t => t.date?.slice(0, 7)).filter(Boolean))).sort().reverse();
 
-  const amounts = transactions.map((t) => t.amount);
+  const monthFilteredTransactions = selectedMonth === 'all'
+    ? transactions
+    : transactions.filter(t => t.date?.slice(0, 7) === selectedMonth);
+
+  const amounts = monthFilteredTransactions.map((t) => t.amount);
   const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
   const income = amounts.filter((item) => item > 0).reduce((acc, item) => (acc += item), 0).toFixed(2);
   const expense = (amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) * -1).toFixed(2);
 
+  const finalFilteredTransactions = monthFilteredTransactions.filter(t => {
+    const matchesSearch = t.text.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPayment = selectedPaymentFilter === 'all' || t.paymentMethod === selectedPaymentFilter;
+    const matchesCategory = selectedCategoryFilter === 'all' || (t.category || 'general') === selectedCategoryFilter;
+    return matchesSearch && matchesPayment && matchesCategory;
+  });
+
   const categoryTotals = categories.map((cat) => {
-    const catTotal = transactions
+    const catTotal = monthFilteredTransactions
       .filter((t) => (t.category || 'general') === cat.id && t.amount < 0)
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     return { ...cat, total: catTotal };
   });
-
-  const filteredTransactions = selectedCategoryFilter === 'all'
-    ? transactions
-    : transactions.filter((t) => (t.category || 'general') === selectedCategoryFilter);
-
-  const activeCategoryObj = categories.find(c => c.id === selectedCategoryFilter);
 
   return (
     <div className="app-container">
@@ -358,18 +348,32 @@ function App() {
                 {userDisplayName}
               </h2>
             </div>
-            <button 
-              type="button" 
-              onClick={() => setShowUpdatesModal(true)} 
-              style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              🔔 עדכונים
-            </button>
+            
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <select 
+                value={selectedMonth} 
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="all" style={{ color: '#333' }}>כל החודשים</option>
+                {availableMonths.map(m => (
+                  <option key={m} value={m} style={{ color: '#333' }}>{m}</option>
+                ))}
+              </select>
+
+              <button 
+                type="button" 
+                onClick={() => setShowUpdatesModal(true)} 
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+              >
+                🔔
+              </button>
+            </div>
           </header>
 
           <div className="balance-card-floating">
             <div className="balance-top-row">
-              <span className="balance-label">יתרה בחשבון</span>
+              <span className="balance-label">{selectedMonth === 'all' ? 'יתרת כל הזמנים' : `יתרת חודש ${selectedMonth}`}</span>
               <span className="dots-menu">•••</span>
             </div>
             <h1 className="balance-amount">₪{total}</h1>
@@ -398,34 +402,37 @@ function App() {
         {activeTab === 'home' && (
           <>
             <div className="section-header">
-              <h3>קטגוריות מובילות</h3>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
-                  + הוסף קטגוריה
-                </button>
-                <span className="see-all" onClick={() => setActiveTab('analytics')}>הצג הכל</span>
-              </div>
+              <h3>סיכום לפי קטגוריות</h3>
+              <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                + הוסף קטגוריה
+              </button>
             </div>
+            
             <div className="categories-grid">
-              {categoryTotals.slice(0, 4).map((cat) => (
-                <div key={cat.id} className="category-pill" onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }}>
-                  <span className="cat-icon">{cat.icon}</span>
-                  <div className="cat-info">
-                    <span className="cat-name">{cat.name}</span>
-                    <span className="cat-amount">₪{cat.total.toFixed(0)}</span>
+              {categoryTotals.filter(c => c.id !== 'salary').map((cat) => {
+                return (
+                  <div key={cat.id} className="category-pill" onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 12px', background: 'white', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', gap: '6px', cursor: 'pointer' }}>
+                    <div style={{ fontSize: '24px' }}>{cat.icon}</div>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569', textAlign: 'center' }}>
+                      {cat.name}
+                    </span>
+                    <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#1e1b4b', marginTop: '2px' }}>
+                      ₪{cat.total.toFixed(0)}
+                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="section-header" style={{ marginTop: '24px' }}>
               <h3>תנועות אחרונות</h3>
+              <span className="see-all" onClick={() => setActiveTab('analytics')}>הצג הכל</span>
             </div>
-            {transactions.length === 0 ? (
-              <p className="empty-msg">אין עדיין תנועות בחשבון</p>
+            {monthFilteredTransactions.length === 0 ? (
+              <p className="empty-msg">אין עדיין תנועות בחודש זה</p>
             ) : (
               <ul className="bank-list">
-                {transactions.slice(0, 5).map((t) => {
+                {monthFilteredTransactions.slice(0, 5).map((t) => {
                   const catObj = categories.find((c) => c.id === (t.category || 'general'));
                   const pmObj = PAYMENT_METHODS.find((p) => p.id === t.paymentMethod);
                   return (
@@ -433,9 +440,11 @@ function App() {
                       <div className="bank-left">
                         <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
                         <div className="bank-details">
-                          <span className="bank-text">{t.text}</span>
+                          <span className="bank-text">
+                            {t.text} {t.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>קבוע 🔄</span>}
+                          </span>
                           <span className="bank-subtext">
-                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''}
+                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {t.date}
                           </span>
                         </div>
                       </div>
@@ -455,19 +464,39 @@ function App() {
 
         {activeTab === 'analytics' && (
           <div className="analytics-view">
-            <div className="history-header">
-              <h3>ניהול קטגוריות ופירוט הוצאות</h3>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
-                  + הוסף קטגוריה
+            <div className="history-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                <h3>חיפוש וסינון מתקדם</h3>
+                <button type="button" onClick={handleAddRecurringTransactions} style={{ background: '#ede9fe', color: '#7c3aed', border: '1px solid #c4b5fd', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
+                  🔄 טען תנועות קבועות לחודש
                 </button>
-                {selectedCategoryFilter !== 'all' && (
-                  <button className="reset-filter-btn" onClick={() => setSelectedCategoryFilter('all')}>הצג הכל</button>
-                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
+                <input 
+                  type="text" 
+                  placeholder="🔍 חפש לפי תיאור..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-field"
+                  style={{ flex: '1', minWidth: '150px', padding: '8px 12px', fontSize: '13px', margin: 0 }}
+                />
+                
+                <select 
+                  value={selectedPaymentFilter} 
+                  onChange={(e) => setSelectedPaymentFilter(e.target.value)}
+                  className="input-field select-field"
+                  style={{ flex: '1', minWidth: '130px', padding: '8px', fontSize: '13px', margin: 0 }}
+                >
+                  <option value="all">כל אמצעי התשלום</option>
+                  {PAYMENT_METHODS.map(pm => (
+                    <option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="categories-full-grid">
+            <div className="categories-full-grid" style={{ marginTop: '15px' }}>
               {categoryTotals.map((cat) => (
                 <div key={cat.id} className={`category-box-card ${selectedCategoryFilter === cat.id ? 'active' : ''}`} onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === cat.id ? 'all' : cat.id)}>
                   <span className="cat-box-icon">{cat.icon}</span>
@@ -478,21 +507,23 @@ function App() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '10px' }}>
-              <h3 style={{ fontSize: '16px', color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {selectedCategoryFilter === 'all' ? '📦 כל התנועות בחשבון' : `${activeCategoryObj?.icon} פירוט תנועות עבור: ${activeCategoryObj?.name}`}
+              <h3 style={{ fontSize: '15px', color: '#1e1b4b' }}>
+                תוצאות סינון ({finalFilteredTransactions.length} פריטים)
               </h3>
-              <span style={{ fontSize: '13px', color: '#64748b' }}>
-                ({filteredTransactions.length} פריטים)
-              </span>
+              {(selectedCategoryFilter !== 'all' || searchQuery || selectedPaymentFilter !== 'all') && (
+                <button onClick={() => { setSelectedCategoryFilter('all'); setSearchQuery(''); setSelectedPaymentFilter('all'); }} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
+                  איפוס סינונים
+                </button>
+              )}
             </div>
             
-            {filteredTransactions.length === 0 ? (
+            {finalFilteredTransactions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px', background: '#f8fafc', borderRadius: '12px', color: '#64748b', fontSize: '14px' }}>
-                אין עדיין תנועות תחת קטגוריה זו
+                לא נמצאו תנועות העונות על הקריטריונים
               </div>
             ) : (
               <ul className="bank-list">
-                {filteredTransactions.map((t) => {
+                {finalFilteredTransactions.map((t) => {
                   const catObj = categories.find((c) => c.id === (t.category || 'general'));
                   const pmObj = PAYMENT_METHODS.find((p) => p.id === t.paymentMethod);
                   return (
@@ -500,9 +531,11 @@ function App() {
                       <div className="bank-left">
                         <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
                         <div className="bank-details">
-                          <span className="bank-text">{t.text}</span>
+                          <span className="bank-text">
+                            {t.text} {t.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>קבוע 🔄</span>}
+                          </span>
                           <span className="bank-subtext">
-                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''}
+                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {t.date}
                           </span>
                         </div>
                       </div>
@@ -526,11 +559,7 @@ function App() {
             <h2>{userDisplayName}</h2>
             <p className="profile-email">{session.user.email}</p>
             <div className="profile-settings-list" style={{ marginTop: '20px' }}>
-              <button 
-                type="button" 
-                onClick={handleLogout} 
-                style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}
-              >
+              <button type="button" onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
                 🚪 התנתק מהמערכת
               </button>
             </div>
@@ -542,15 +571,14 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div className="modal-header">
-              <h3>📢 עדכונים חדשים במערכת</h3>
+              <h3>📢 עדכונים חדשים (Vault v2.2)</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
             </div>
             <div style={{ padding: '10px 0', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
               <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#7c3aed' }}>הוספת אמצעי תשלום (Vault v1.4)</strong>
+                <strong style={{ color: '#7c3aed' }}>ניקיון ופשטות:</strong>
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-                  • מעתה ניתן לבחור מאיפה בוצעה ההוצאה או ההכנסה (כרטיס אשראי, ביט, פייפאל, מזומן וכו').<br/>
-                  • אמצעי התשלום מוצג בפירוט התנועות בצורה ברורה.
+                  • הוסרו שאלון התקציב הראשוני ומנגנון התקציבים כדי לתת חוויית משתמש נקייה ומהירה יותר.
                 </p>
               </div>
             </div>
@@ -573,26 +601,17 @@ function App() {
             )}
 
             <form onSubmit={addTransaction} className="form-group">
-              <input
-                type="text"
-                className="input-field"
-                placeholder="תיאור (למשל: סופר, משכורת)"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                autoFocus
-              />
-              <input
-                type="number"
-                step="any"
-                className="input-field"
-                placeholder="סכום (₪)"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
+              <input type="text" className="input-field" placeholder="תיאור (למשל: סופרמרקט, נטפליקס)" value={text} onChange={(e) => setText(e.target.value)} autoFocus />
+              <input type="number" step="any" className="input-field" placeholder="סכום (₪)" value={amount} onChange={(e) => setAmount(e.target.value)} />
 
               <div className="radio-group">
                 <button type="button" className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`} onClick={() => setType('expense')}>הוצאה</button>
                 <button type="button" className={`type-btn ${type === 'income' ? 'active-income' : ''}`} onClick={() => setType('income')}>הכנסה</button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>תאריך התנועה:</label>
+                <input type="date" className="input-field" value={transDate} onChange={(e) => setTransDate(e.target.value)} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -613,7 +632,12 @@ function App() {
                 </select>
               </div>
 
-              <button type="submit" className="submit-btn" style={{ marginTop: '5px' }}>שמור פעולה</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569', marginTop: '5px' }}>
+                <input type="checkbox" id="recurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }} />
+                <label htmlFor="recurring" style={{ cursor: 'pointer' }}>תנועה קבועה חודשית (הוראת קבע)</label>
+              </div>
+
+              <button type="submit" className="submit-btn" style={{ marginTop: '10px' }}>שמור פעולה</button>
             </form>
           </div>
         </div>
@@ -627,23 +651,8 @@ function App() {
               <button type="button" className="close-modal-btn" onClick={() => setShowCategoryModal(false)}>✕</button>
             </div>
             <form onSubmit={handleAddCategory} className="form-group">
-              <input
-                type="text"
-                className="input-field"
-                placeholder="שם הקטגוריה (למשל: חיות מחמד)"
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                autoFocus
-                required
-              />
-              <input
-                type="text"
-                className="input-field"
-                placeholder="אייקון או אימוג'י (למשל: 🐱)"
-                value={newCatIcon}
-                onChange={(e) => setNewCatIcon(e.target.value)}
-                maxLength={4}
-              />
+              <input type="text" className="input-field" placeholder="שם הקטגוריה (למשל: חיות מחמד)" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus required />
+              <input type="text" className="input-field" placeholder="אייקון או אימוג'י (למשל: 🐱)" value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} maxLength={4} />
               <button type="submit" className="submit-btn">צור קטגוריה</button>
             </form>
           </div>
@@ -651,19 +660,13 @@ function App() {
       )}
 
       <nav className="bottom-nav">
-        <button type="button" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => { setActiveTab('profile'); }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+        <button type="button" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           <span className="nav-text">פרופיל</span>
         </button>
 
-        <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-            <line x1="2" y1="10" x2="22" y2="10"></line>
-          </svg>
+        <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
           <span className="nav-text">ארנק</span>
         </button>
 
@@ -671,20 +674,13 @@ function App() {
           <button type="button" className="center-add-btn" onClick={() => { setFormError(''); setShowAddModal(true); }}>+</button>
         </div>
 
-        <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => { setActiveTab('analytics'); }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
-          </svg>
+        <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
           <span className="nav-text">ניתוח</span>
         </button>
 
-        <button type="button" className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => { setActiveTab('home'); }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
+        <button type="button" className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
           <span className="nav-text">בית</span>
         </button>
       </nav>
