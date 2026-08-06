@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import './App.css';
 
-const DEFAULT_CATEGORIES = [
-  { id: 'food', name: 'אוכל וקניות', icon: '🛒' },
-  { id: 'bills', name: 'חשבונות ודיור', icon: '🏠' },
-  { id: 'transport', name: 'תחבורה ודלק', icon: '🚗' },
-  { id: 'entertainment', name: 'בילויים ופנאי', icon: '🎬' },
-  { id: 'general', name: 'כללי', icon: '📦' }
+const INITIAL_CATEGORIES = [
+  { id: 'food', name: 'אוכל וקניות', icon: '🛒', budget: 2000 },
+  { id: 'bills', name: 'חשבונות ודיור', icon: '🏠', budget: 4000 },
+  { id: 'transport', name: 'תחבורה ודלק', icon: '🚗', budget: 1000 },
+  { id: 'entertainment', name: 'בילויים ופנאי', icon: '🎬', budget: 800 },
+  { id: 'salary', name: 'משכורת והכנסה', icon: '💰', budget: 0 },
+  { id: 'general', name: 'כללי', icon: '📦', budget: 500 }
 ];
 
 const PAYMENT_METHODS = [
@@ -31,12 +32,10 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
-  const [darkMode, setDarkMode] = useState(false);
-
   const [transactions, setTransactions] = useState([]);
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   
-  // טופס הוספת תנועה
+  // טופס הוספה
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
@@ -58,16 +57,9 @@ function App() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatIcon, setNewCatIcon] = useState('🏷️');
+  const [newCatBudget, setNewCatBudget] = useState('');
 
   const [showUpdatesModal, setShowUpdatesModal] = useState(false);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }, [darkMode]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -85,26 +77,8 @@ function App() {
   useEffect(() => {
     if (session) {
       fetchTransactions();
-      fetchCategories();
     }
   }, [session]);
-
-  const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*');
-
-    if (error) {
-      console.error('Error fetching categories:', error);
-    } else if (data && data.length > 0) {
-      const customCats = data.map(d => ({
-        id: d.id,
-        name: d.name,
-        icon: d.icon
-      }));
-      setCategories([...DEFAULT_CATEGORIES, ...customCats.filter(c => !DEFAULT_CATEGORIES.some(def => def.id === c.id))]);
-    }
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -230,7 +204,7 @@ function App() {
     }
   };
 
-  const handleAddCategory = async (e) => {
+  const handleAddCategory = (e) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
 
@@ -239,29 +213,21 @@ function App() {
       id: newId,
       name: newCatName.trim(),
       icon: newCatIcon || '📦',
-      user_id: session.user.id
+      budget: parseFloat(newCatBudget) || 0
     };
 
-    const { error } = await supabase
-      .from('categories')
-      .insert([newCategoryObj]);
-
-    if (error) {
-      console.error('Error saving category:', error);
-      alert('שגיאה: ' + error.message + ' (קוד: ' + error.code + ')');
-    } else {
-      setCategories([...categories, { id: newId, name: newCatName.trim(), icon: newCatIcon || '📦' }]);
-      setCategory(newId);
-      setNewCatName('');
-      setNewCatIcon('🏷️');
-      setShowCategoryModal(false);
-    }
+    setCategories([...categories, newCategoryObj]);
+    setCategory(newId);
+    setNewCatName('');
+    setNewCatIcon('🏷️');
+    setNewCatBudget('');
+    setShowCategoryModal(false);
   };
 
   const handleAddRecurringTransactions = async () => {
     const recurringItems = transactions.filter(t => t.is_recurring);
     if (recurringItems.length === 0) {
-      alert('אין תנועות קבועות מוגדרות במערכת.');
+      alert('אין תנועות קבועות מוגדרות במערכת. סמן תנועות כ"קבועות" כדי להשתמש בקיצור זה.');
       return;
     }
 
@@ -332,7 +298,7 @@ function App() {
           ) : (
             <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>יצירת חשבון חדש</h2>
-              <input type="text" placeholder="שם מלא" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              <input type="text" placeholder="שם מלא (למשל: דניאל)" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
               <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required />
               <input type="password" placeholder="בחר סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required />
               <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>הירשם</button>
@@ -350,6 +316,7 @@ function App() {
   }
 
   const userDisplayName = session.user.user_metadata?.full_name || session.user.email;
+
   const availableMonths = Array.from(new Set(transactions.map(t => t.date?.slice(0, 7)).filter(Boolean))).sort().reverse();
 
   const monthFilteredTransactions = selectedMonth === 'all'
@@ -362,8 +329,7 @@ function App() {
   const expense = (amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) * -1).toFixed(2);
 
   const finalFilteredTransactions = monthFilteredTransactions.filter(t => {
-    const searchText = (t.text || t.desc || '').toLowerCase();
-    const matchesSearch = searchText.includes(searchQuery.toLowerCase());
+    const matchesSearch = t.text.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPayment = selectedPaymentFilter === 'all' || t.paymentMethod === selectedPaymentFilter;
     const matchesCategory = selectedCategoryFilter === 'all' || (t.category || 'general') === selectedCategoryFilter;
     return matchesSearch && matchesPayment && matchesCategory;
@@ -389,14 +355,6 @@ function App() {
             </div>
             
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button 
-                type="button" 
-                onClick={() => setDarkMode(!darkMode)} 
-                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
-              >
-                {darkMode ? '☀️' : '🌙'}
-              </button>
-
               <select 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(e.target.value)}
@@ -449,7 +407,7 @@ function App() {
         {activeTab === 'home' && (
           <>
             <div className="section-header">
-              <h3>סיכום לפי קטגוריות</h3>
+              <h3>סיכום הוצאות לפי קטגוריות</h3>
               <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
                 + הוסף קטגוריה
               </button>
@@ -458,14 +416,15 @@ function App() {
             <div className="categories-grid">
               {categoryTotals.filter(c => c.id !== 'salary').map((cat) => {
                 return (
-                  <div key={cat.id} className="category-pill" onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 12px', background: 'white', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', gap: '6px', cursor: 'pointer' }}>
-                    <div style={{ fontSize: '24px' }}>{cat.icon}</div>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569', textAlign: 'center' }}>
-                      {cat.name}
-                    </span>
-                    <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#1e1b4b', marginTop: '2px' }}>
-                      ₪{cat.total.toFixed(0)}
-                    </span>
+                  <div key={cat.id} className="category-pill" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '12px', cursor: 'pointer' }} onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '14px', color: '#1e1b4b' }}>
+                        {cat.icon} {cat.name}
+                      </span>
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#475569' }}>
+                        ₪{cat.total.toFixed(0)}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -618,14 +577,17 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div className="modal-header">
-              <h3>📢 עדכונים חדשים (Vault v2.5)</h3>
+              <h3>📢 עדכונים חדשים (Vault v2.0)</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
             </div>
             <div style={{ padding: '10px 0', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
               <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#7c3aed' }}>מצב כהה (Dark Mode):</strong>
+                <strong style={{ color: '#7c3aed' }}>שדרוגים גדולים נוספו למערכת:</strong>
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-                  • נוסף כפתור מעבר למצב כהה בראש המסך לנוחות השימוש בלילה.
+                  • 📅 <strong>בורר חודשים:</strong> מעבר נוח בין סיכומים של חודשים שונים.<br/>
+                  • 🎯 <strong>סיכום קטגוריות:</strong> מעקב אחר סך ההוצאות לכל קטגוריה.<br/>
+                  • 🔄 <strong>הוראות קבע:</strong> סימון תנועות כקבועות ושכפולן המהיר לחודש הנוכחי.<br/>
+                  • 🔍 <strong>חיפוש וסינון:</strong> חיפוש חופשי וסינון לפי אמצעי תשלום.
                 </p>
               </div>
             </div>
@@ -700,6 +662,7 @@ function App() {
             <form onSubmit={handleAddCategory} className="form-group">
               <input type="text" className="input-field" placeholder="שם הקטגוריה (למשל: חיות מחמד)" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus required />
               <input type="text" className="input-field" placeholder="אייקון או אימוג'י (למשל: 🐱)" value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} maxLength={4} />
+              <input type="number" className="input-field" placeholder="תקציב חודשי מקסימלי (₪)" value={newCatBudget} onChange={(e) => setNewCatBudget(e.target.value)} />
               <button type="submit" className="submit-btn">צור קטגוריה</button>
             </form>
           </div>
