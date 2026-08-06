@@ -33,7 +33,19 @@ function App() {
   const [authSuccess, setAuthSuccess] = useState('');
 
   const [transactions, setTransactions] = useState([]);
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  
+  // טעינת קטגוריות מותאמות אישית מ-localStorage כדי שלא יימחקו בסגירת האפליקציה
+  const [categories, setCategories] = useState(() => {
+    const savedCategories = localStorage.getItem('vault_custom_categories');
+    if (savedCategories) {
+      try {
+        return JSON.parse(savedCategories);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_CATEGORIES;
+  });
   
   // מצב כהה
   const [darkMode, setDarkMode] = useState(() => {
@@ -74,6 +86,11 @@ function App() {
       document.body.classList.remove('dark-mode');
     }
   }, [darkMode]);
+
+  // שמירת קטגוריות אוטומטית ב-localStorage בכל שינוי
+  useEffect(() => {
+    localStorage.setItem('vault_custom_categories', JSON.stringify(categories));
+  }, [categories]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -615,7 +632,7 @@ function App() {
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px' }}>
                   • 🌙 <strong>מצב כהה (Dark Mode):</strong> תמיכה מלאה בעיצוב כהה לעיניים, נשמר אוטומטית במכשיר.<br/>
                   • 📅 <strong>בורר חודשים:</strong> מעבר נוח בין סיכומים של חודשים שונים.<br/>
-                  • 🎯 <strong>סיכום קטגוריות נקי:</strong> הצגת סכום ההוצאות לכל קטגוריה ללא תקרת תקציב.
+                  • 🎯 <strong>סיכום קטגוריות נקי:</strong> הצגת סכום ההוצאות לכל קטגוריה לצמיתות.
                 </p>
               </div>
             </div>
