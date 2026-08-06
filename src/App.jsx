@@ -11,17 +11,24 @@ const INITIAL_CATEGORIES = [
   { id: 'general', name: 'כללי', icon: '📦' }
 ];
 
+const PAYMENT_METHODS = [
+  { id: 'credit_card', name: 'כרטיס אשראי', icon: '💳' },
+  { id: 'bit', name: 'Bit', icon: '📱' },
+  { id: 'paypal', name: 'PayPal', icon: '🅿️' },
+  { id: 'cash', name: 'מזומן', icon: '💵' },
+  { id: 'bank_transfer', name: 'העברה בנקאית', icon: '🏦' },
+  { id: 'other', name: 'אחר', icon: '🔄' }
+];
+
 function App() {
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-  // מצב האם להציג מסך הרשמה (true) או התחברות (false)
-  const [authMode, setAuthMode] = useState('login'); // 'login' או 'signup'
-
-  // שדות טפסים
+  const [authMode, setAuthMode] = useState('login'); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
@@ -32,6 +39,7 @@ function App() {
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
   const [category, setCategory] = useState('general');
+  const [paymentMethod, setPaymentMethod] = useState('credit_card');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
   
   const [activeTab, setActiveTab] = useState('home'); 
@@ -41,6 +49,8 @@ function App() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatIcon, setNewCatIcon] = useState('🏷️');
+
+  const [showUpdatesModal, setShowUpdatesModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -61,11 +71,14 @@ function App() {
     }
   }, [session]);
 
-  // טיפול בהתחברות
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
     setAuthSuccess('');
+
+    if (rememberMe) {
+      await supabase.auth.setSession({ access_token: session?.access_token, refresh_token: session?.refresh_token });
+    }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -73,7 +86,6 @@ function App() {
     }
   };
 
-  // טיפול בהרשמה
   const handleSignUp = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -112,7 +124,8 @@ function App() {
     } else {
       const formattedData = (data || []).map(t => ({
         ...t,
-        text: t.desc || ''
+        text: t.desc || '',
+        paymentMethod: t.payment_method || 'credit_card'
       }));
       setTransactions(formattedData);
     }
@@ -136,7 +149,14 @@ function App() {
 
     const { data, error } = await supabase
       .from('transactions')
-      .insert([{ desc: text.trim(), amount: finalAmount, category, type, user_id: session.user.id }])
+      .insert([{ 
+        desc: text.trim(), 
+        amount: finalAmount, 
+        category, 
+        type, 
+        payment_method: paymentMethod,
+        user_id: session.user.id 
+      }])
       .select();
 
     if (error) {
@@ -145,7 +165,8 @@ function App() {
     } else if (data) {
       const newTrans = {
         ...data[0],
-        text: data[0].desc || text.trim()
+        text: data[0].desc || text.trim(),
+        paymentMethod: data[0].payment_method || paymentMethod
       };
       setTransactions([newTrans, ...transactions]);
       setText('');
@@ -191,7 +212,6 @@ function App() {
     return <div style={{ textAlign: 'center', marginTop: '50px' }}>טוען...</div>;
   }
 
-  // אם המשתמש לא מחובר - נציג דף התחברות או הרשמה נפרדים ונקיים
   if (!session) {
     return (
       <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc', padding: '20px' }}>
@@ -215,7 +235,6 @@ function App() {
           )}
 
           {authMode === 'login' ? (
-            /* --- דף התחברות --- */
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>התחברות לחשבון</h2>
               <input
@@ -234,6 +253,18 @@ function App() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569', cursor: 'pointer' }}>
+                <input 
+                  type="checkbox" 
+                  id="remember" 
+                  checked={rememberMe} 
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                />
+                <label htmlFor="remember" style={{ cursor: 'pointer' }}>זכור אותי במכשיר זה</label>
+              </div>
+
               <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>
                 התחבר
               </button>
@@ -249,7 +280,6 @@ function App() {
               </div>
             </form>
           ) : (
-            /* --- דף הרשמה --- */
             <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>יצירת חשבון חדש</h2>
               <input
@@ -315,6 +345,8 @@ function App() {
     ? transactions
     : transactions.filter((t) => (t.category || 'general') === selectedCategoryFilter);
 
+  const activeCategoryObj = categories.find(c => c.id === selectedCategoryFilter);
+
   return (
     <div className="app-container">
       <div className="header-bg">
@@ -328,10 +360,10 @@ function App() {
             </div>
             <button 
               type="button" 
-              onClick={handleLogout} 
-              style={{ background: '#dc2626', border: 'none', color: 'white', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+              onClick={() => setShowUpdatesModal(true)} 
+              style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}
             >
-              התנתק
+              🔔 עדכונים
             </button>
           </header>
 
@@ -395,13 +427,16 @@ function App() {
               <ul className="bank-list">
                 {transactions.slice(0, 5).map((t) => {
                   const catObj = categories.find((c) => c.id === (t.category || 'general'));
+                  const pmObj = PAYMENT_METHODS.find((p) => p.id === t.paymentMethod);
                   return (
                     <li key={t.id} className="bank-item">
                       <div className="bank-left">
                         <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
                         <div className="bank-details">
                           <span className="bank-text">{t.text}</span>
-                          <span className="bank-subtext">{catObj ? catObj.name : 'כללי'}</span>
+                          <span className="bank-subtext">
+                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''}
+                          </span>
                         </div>
                       </div>
                       <div className="bank-right">
@@ -421,13 +456,13 @@ function App() {
         {activeTab === 'analytics' && (
           <div className="analytics-view">
             <div className="history-header">
-              <h3>סיכום הוצאות לפי קטגוריות</h3>
+              <h3>ניהול קטגוריות ופירוט הוצאות</h3>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
                   + הוסף קטגוריה
                 </button>
                 {selectedCategoryFilter !== 'all' && (
-                  <button className="reset-filter-btn" onClick={() => setSelectedCategoryFilter('all')}>איפוס סינון</button>
+                  <button className="reset-filter-btn" onClick={() => setSelectedCategoryFilter('all')}>הצג הכל</button>
                 )}
               </div>
             </div>
@@ -442,32 +477,46 @@ function App() {
               ))}
             </div>
 
-            <h3 style={{ marginTop: '20px', marginBottom: '10px', fontSize: '15px', color: '#1e1b4b' }}>
-              {selectedCategoryFilter === 'all' ? 'כל התנועות' : 'תנועות בסינון'}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '10px' }}>
+              <h3 style={{ fontSize: '16px', color: '#1e1b4b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {selectedCategoryFilter === 'all' ? '📦 כל התנועות בחשבון' : `${activeCategoryObj?.icon} פירוט תנועות עבור: ${activeCategoryObj?.name}`}
+              </h3>
+              <span style={{ fontSize: '13px', color: '#64748b' }}>
+                ({filteredTransactions.length} פריטים)
+              </span>
+            </div>
             
-            <ul className="bank-list">
-              {filteredTransactions.map((t) => {
-                const catObj = categories.find((c) => c.id === (t.category || 'general'));
-                return (
-                  <li key={t.id} className="bank-item">
-                    <div className="bank-left">
-                      <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
-                      <div className="bank-details">
-                        <span className="bank-text">{t.text}</span>
-                        <span className="bank-subtext">{catObj ? catObj.name : 'כללי'}</span>
+            {filteredTransactions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px', background: '#f8fafc', borderRadius: '12px', color: '#64748b', fontSize: '14px' }}>
+                אין עדיין תנועות תחת קטגוריה זו
+              </div>
+            ) : (
+              <ul className="bank-list">
+                {filteredTransactions.map((t) => {
+                  const catObj = categories.find((c) => c.id === (t.category || 'general'));
+                  const pmObj = PAYMENT_METHODS.find((p) => p.id === t.paymentMethod);
+                  return (
+                    <li key={t.id} className="bank-item">
+                      <div className="bank-left">
+                        <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
+                        <div className="bank-details">
+                          <span className="bank-text">{t.text}</span>
+                          <span className="bank-subtext">
+                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="bank-right">
-                      <span className={`bank-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
-                        {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount).toFixed(2)}
-                      </span>
-                      <button onClick={() => deleteTransaction(t.id)} className="delete-btn">🗑️</button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                      <div className="bank-right">
+                        <span className={`bank-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
+                          {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount).toFixed(2)}
+                        </span>
+                        <button onClick={() => deleteTransaction(t.id)} className="delete-btn">🗑️</button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         )}
 
@@ -488,6 +537,26 @@ function App() {
           </div>
         )}
       </div>
+
+      {showUpdatesModal && (
+        <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+            <div className="modal-header">
+              <h3>📢 עדכונים חדשים במערכת</h3>
+              <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
+            </div>
+            <div style={{ padding: '10px 0', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
+                <strong style={{ color: '#7c3aed' }}>הוספת אמצעי תשלום (Vault v1.4)</strong>
+                <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+                  • מעתה ניתן לבחור מאיפה בוצעה ההוצאה או ההכנסה (כרטיס אשראי, ביט, פייפאל, מזומן וכו').<br/>
+                  • אמצעי התשלום מוצג בפירוט התנועות בצורה ברורה.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
@@ -526,13 +595,25 @@ function App() {
                 <button type="button" className={`type-btn ${type === 'income' ? 'active-income' : ''}`} onClick={() => setType('income')}>הכנסה</button>
               </div>
 
-              <select className="input-field select-field" value={category} onChange={(e) => setCategory(e.target.value)}>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>בחר קטגוריה:</label>
+                <select className="input-field select-field" value={category} onChange={(e) => setCategory(e.target.value)}>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                  ))}
+                </select>
+              </div>
 
-              <button type="submit" className="submit-btn">שמור פעולה</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>אמצעי תשלום:</label>
+                <select className="input-field select-field" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                  {PAYMENT_METHODS.map((pm) => (
+                    <option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button type="submit" className="submit-btn" style={{ marginTop: '5px' }}>שמור פעולה</button>
             </form>
           </div>
         </div>
