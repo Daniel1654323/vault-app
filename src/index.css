@@ -1,37 +1,65 @@
-:root {
-  direction: rtl;
-  font-family: Arial, sans-serif;
-  color: #ffffff;
-  background-color: #121212;
+* {
+  box-sizing: border-box;
 }
 
 body {
+  direction: rtl;
+  text-align: right;
+  background-color: #121212;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  display: flex;
-  justify-content: center;
-  background-color: #121212;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h2, h3, h4 {
+  text-align: right;
+}
+
+.balance-board {
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin: 20px 0;
+  border: 1px solid #2e2e2e;
+}
+
+.balance-board h4 {
+  text-align: center;
 }
 
 input[type="text"],
 input[type="number"] {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background-color: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 6px;
+  border: 1px solid #3e3e3e;
+  border-radius: 8px;
   color: #ffffff;
   font-size: 16px;
-  box-sizing: border-box;
+  direction: rtl;
+  text-align: right;
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+  color: #888888;
 }
 
 button[type="submit"] {
   width: 100%;
-  padding: 12px;
-  background-color: #646cff;
+  padding: 14px;
+  background-color: #4f46e5;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -39,5 +67,5 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-  background-color: #535bf2;
+  background-color: #4338ca;
 }
