@@ -1,7 +1,43 @@
-@import "tailwindcss";
+:root {
+  direction: rtl;
+  font-family: Arial, sans-serif;
+  color: #ffffff;
+  background-color: #121212;
+}
 
 body {
-  background-color: #09090b;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  background-color: #121212;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
   color: #ffffff;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button[type="submit"]:hover {
+  background-color: #535bf2;
 }
