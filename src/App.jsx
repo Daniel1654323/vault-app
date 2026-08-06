@@ -31,6 +31,8 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
+  const [darkMode, setDarkMode] = useState(false);
+
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   
@@ -58,6 +60,14 @@ function App() {
   const [newCatIcon, setNewCatIcon] = useState('🏷️');
 
   const [showUpdatesModal, setShowUpdatesModal] = useState(false);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -238,7 +248,7 @@ function App() {
 
     if (error) {
       console.error('Error saving category:', error);
-      alert('שגיאה בשמירת הקטגוריה במסד הנתונים');
+      alert('שגיאה: ' + error.message + ' (קוד: ' + error.code + ')');
     } else {
       setCategories([...categories, { id: newId, name: newCatName.trim(), icon: newCatIcon || '📦' }]);
       setCategory(newId);
@@ -352,7 +362,8 @@ function App() {
   const expense = (amounts.filter((item) => item < 0).reduce((acc, item) => (acc += item), 0) * -1).toFixed(2);
 
   const finalFilteredTransactions = monthFilteredTransactions.filter(t => {
-    const matchesSearch = t.text.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchText = (t.text || t.desc || '').toLowerCase();
+    const matchesSearch = searchText.includes(searchQuery.toLowerCase());
     const matchesPayment = selectedPaymentFilter === 'all' || t.paymentMethod === selectedPaymentFilter;
     const matchesCategory = selectedCategoryFilter === 'all' || (t.category || 'general') === selectedCategoryFilter;
     return matchesSearch && matchesPayment && matchesCategory;
@@ -378,6 +389,14 @@ function App() {
             </div>
             
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                type="button" 
+                onClick={() => setDarkMode(!darkMode)} 
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+              >
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+
               <select 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(e.target.value)}
@@ -599,14 +618,14 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div className="modal-header">
-              <h3>📢 עדכונים חדשים (Vault v2.3)</h3>
+              <h3>📢 עדכונים חדשים (Vault v2.5)</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
             </div>
             <div style={{ padding: '10px 0', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
               <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#7c3aed' }}>שמירת קטגוריות:</strong>
+                <strong style={{ color: '#7c3aed' }}>מצב כהה (Dark Mode):</strong>
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-                  • מעה״ש כעת שומר את הקטגוריות החדשות שאתה יוצר ישירות ב-Supabase כך שיישארו איתך לתמיד.
+                  • נוסף כפתור מעבר למצב כהה בראש המסך לנוחות השימוש בלילה.
                 </p>
               </div>
             </div>

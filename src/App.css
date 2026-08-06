@@ -1,31 +1,29 @@
-* {
-  box-sizing: border-box;
+/* App Base Styles */
+body {
   margin: 0;
   padding: 0;
-}
-
-body {
-  direction: rtl;
-  background-color: #f8fafc;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #f1f5f9;
   color: #1e293b;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
+  direction: rtl;
 }
 
 .app-container {
-  max-width: 440px;
+  max-width: 480px;
   margin: 0 auto;
-  padding-bottom: 90px;
-  position: relative;
   min-height: 100vh;
+  background-color: #f8fafc;
+  position: relative;
+  padding-bottom: 90px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.05);
 }
 
-/* רקע עליון סגול פרימיום */
 .header-bg {
-  background: linear-gradient(135deg, #6d28d9, #4f46e5);
-  padding: 24px 16px 75px 16px;
-  border-bottom-left-radius: 28px;
-  border-bottom-right-radius: 28px;
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  padding: 20px 20px 70px 20px;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  color: white;
 }
 
 .container {
@@ -39,94 +37,94 @@ body {
   margin-bottom: 20px;
 }
 
-.greeting-sub { font-size: 13px; color: #ddd6fe; }
-.greeting-name { font-size: 20px; font-weight: 700; color: #ffffff; }
-
-.notification-bell {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  backdrop-filter: blur(4px);
+.greeting-sub {
+  font-size: 12px;
+  opacity: 0.8;
 }
 
-/* כרטיס יתרה מרחף */
+.greeting-name {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+}
+
 .balance-card-floating {
-  background: #ffffff;
-  border-radius: 20px;
+  background: white;
   padding: 20px;
-  box-shadow: 0 12px 30px -8px rgba(79, 70, 229, 0.2);
-  margin-top: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  color: #1e293b;
+  margin-bottom: -45px;
 }
 
 .balance-top-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #94a3b8;
   font-size: 13px;
+  color: #64748b;
 }
-
-.dots-menu { letter-spacing: 2px; font-weight: bold; color: #cbd5e1; }
 
 .balance-amount {
   font-size: 32px;
   font-weight: 800;
+  margin: 8px 0 16px 0;
   color: #0f172a;
-  margin: 6px 0 16px 0;
-  letter-spacing: -0.5px;
 }
 
 .stats-row {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  background-color: #f8fafc;
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid #f1f5f9;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
 }
 
 .stat-item {
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
 }
 
 .stat-icon-wrapper {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 14px;
 }
 
-.income-icon { background-color: #f0fdf4; color: #16a34a; }
-.expense-icon { background-color: #fef2f2; color: #dc2626; }
+.income-icon { background: #dcfce7; color: #16a34a; }
+.expense-icon { background: #fee2e2; color: #dc2626; }
 
-.stat-title { font-size: 11px; color: #64748b; display: block; font-weight: 500; }
-.stat-val { font-size: 14px; font-weight: 700; }
+.stat-title {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+}
+
+.stat-val {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0;
+}
+
 .stat-val.income { color: #16a34a; }
 .stat-val.expense { color: #dc2626; }
 
 .stat-divider {
   width: 1px;
-  height: 28px;
-  background-color: #e2e8f0;
+  height: 30px;
+  background: #f1f5f9;
   margin: 0 10px;
 }
 
-/* תוכן ראשי */
 .main-content {
-  margin-top: 20px;
+  padding-top: 60px;
+  padding-bottom: 20px;
 }
 
 .section-header {
@@ -136,70 +134,61 @@ body {
   margin-bottom: 12px;
 }
 
-.section-header h3 { font-size: 15px; font-weight: 700; color: #0f172a; }
-.see-all { font-size: 13px; color: #7c3aed; cursor: pointer; font-weight: 600; }
+.section-header h3 {
+  font-size: 16px;
+  margin: 0;
+  color: #1e1b4b;
+}
 
-/* קטגוריות בגריד (נקיות ובוגרות) */
+.see-all {
+  font-size: 13px;
+  color: #7c3aed;
+  cursor: pointer;
+  font-weight: 600;
+}
+
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
 .category-pill {
-  background: #ffffff;
-  padding: 12px 14px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s;
 }
-
 .category-pill:hover {
-  border-color: #cbd5e1;
+  transform: translateY(-2px);
 }
 
-.cat-icon { 
-  font-size: 18px; 
-  background: #f8fafc; 
-  border: 1px solid #f1f5f9;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+.bank-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
 }
-
-.cat-info { display: flex; flex-direction: column; }
-.cat-name { font-size: 12px; color: #64748b; font-weight: 500; }
-.cat-amount { font-size: 14px; font-weight: 700; color: #0f172a; }
-
-/* רשימת עו"ש בנקאית (סגנון נקי ומינימליסטי) */
-.bank-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
 .bank-item {
+  background: white;
+  padding: 12px 16px;
+  border-radius: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px;
-  background-color: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
-.bank-left { display: flex; align-items: center; gap: 12px; }
+.bank-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
 .bank-icon-bg {
   width: 40px;
   height: 40px;
-  background-color: #f8fafc;
-  border: 1px solid #f1f5f9;
+  background: #f8fafc;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -207,141 +196,72 @@ body {
   font-size: 18px;
 }
 
-.bank-details { display: flex; flex-direction: column; gap: 2px; }
-.bank-text { font-size: 14px; font-weight: 600; color: #0f172a; }
-.bank-subtext { font-size: 11px; color: #94a3b8; font-weight: 500; }
+.bank-details {
+  display: flex;
+  flex-direction: column;
+}
 
-.bank-right { display: flex; align-items: center; gap: 12px; }
-.bank-amount { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.bank-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bank-subtext {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.bank-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bank-amount {
+  font-size: 15px;
+  font-weight: bold;
+}
+
 .text-expense { color: #dc2626; }
 .text-income { color: #16a34a; }
 
-.delete-btn { background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0.25; transition: opacity 0.2s; }
-.delete-btn:hover { opacity: 1; }
-.empty-msg { color: #94a3b8; text-align: center; font-size: 13px; padding: 24px; font-weight: 500; }
-
-/* טאב ניתוח / קטגוריות מלא */
-.categories-full-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.category-box-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 14px 8px;
-  text-align: center;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-
-.category-box-card.active {
-  border-color: #7c3aed;
-  background-color: #f5f3ff;
-}
-
-.cat-box-icon { 
-  font-size: 20px;
-  background: #f8fafc;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid #f1f5f9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cat-box-name { font-size: 11px; color: #64748b; font-weight: 500; }
-.cat-box-amount { font-size: 13px; font-weight: 700; color: #0f172a; }
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.reset-filter-btn {
+.delete-btn {
   background: none;
   border: none;
-  color: #7c3aed;
-  font-size: 12px;
   cursor: pointer;
-  font-weight: 600;
-}
-
-/* טאב פרופיל */
-.profile-card {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 32px 20px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-  border: 1px solid #e2e8f0;
-}
-
-.profile-avatar-large {
-  width: 72px;
-  height: 72px;
-  background: #f5f3ff;
-  color: #7c3aed;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  margin: 0 auto 12px auto;
-  border: 1px solid #ede9fe;
-}
-
-.profile-email { font-size: 13px; color: #94a3b8; margin-bottom: 24px; font-weight: 500; }
-
-.profile-settings-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-align: right;
-}
-
-.setting-item {
-  background: #f8fafc;
-  padding: 14px 16px;
-  border-radius: 14px;
   font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  border: 1px solid #f1f5f9;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.delete-btn:hover { opacity: 1; }
+
+.empty-msg {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 20px;
 }
 
-/* מודל הוספת פעולה */
+/* Modals */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
   padding: 16px;
 }
 
 .modal-content {
-  background: #ffffff;
+  background: white;
   width: 100%;
   max-width: 400px;
-  border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 .modal-header {
@@ -351,72 +271,81 @@ body {
   margin-bottom: 16px;
 }
 
-.modal-header h3 { font-size: 16px; font-weight: 700; color: #0f172a; }
-.close-modal-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }
+.modal-header h3 { margin: 0; font-size: 18px; color: #1e1b4b; }
 
-.form-group { display: flex; flex-direction: column; gap: 12px; }
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 .input-field {
-  width: 100%;
   padding: 12px 14px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
   font-size: 14px;
   outline: none;
+  background: #fff;
+  color: #1e293b;
 }
+.input-field:focus { border-color: #7c3aed; }
 
 .select-field { cursor: pointer; }
 
-.radio-group { display: flex; gap: 10px; }
+.radio-group {
+  display: flex;
+  gap: 10px;
+}
 
 .type-btn {
   flex: 1;
   padding: 10px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  color: #64748b;
-  font-size: 14px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+  color: #64748b;
 }
-
-.type-btn.active-expense { border-color: #dc2626; background-color: #fef2f2; color: #dc2626; }
-.type-btn.active-income { border-color: #16a34a; background-color: #f0fdf4; color: #16a34a; }
+.active-expense { background: #fee2e2 !important; color: #dc2626 !important; border-color: #fca5a5 !important; }
+.active-income { background: #dcfce7 !important; color: #16a34a !important; border-color: #86efac !important; }
 
 .submit-btn {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  background: #7c3aed;
   color: white;
   border: none;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 700;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: bold;
   cursor: pointer;
-  margin-top: 6px;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  font-size: 15px;
+  transition: background 0.2s;
 }
+.submit-btn:hover { background: #6d28d9; }
 
-/* תפריט ניווט תחתון */
+/* Bottom Nav */
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 440px;
-  height: 72px;
-  background: #ffffff;
-  border-top: 1px solid #e2e8f0;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  height: 65px;
+  background: white;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 0 10px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
-  z-index: 99;
+  border-top: 1px solid #f1f5f9;
+  z-index: 10;
 }
 
 .nav-item {
@@ -425,45 +354,153 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
+  color: #94a3b8;
   cursor: pointer;
   flex: 1;
-  color: #94a3b8;
 }
 
-.nav-item.active {
-  color: #7c3aed;
-}
-
-.nav-icon { font-size: 18px; }
-.nav-text { font-size: 11px; font-weight: 600; }
+.nav-item.active { color: #7c3aed; }
+.nav-text { font-size: 10px; font-weight: 600; }
 
 .nav-center-btn-wrapper {
   position: relative;
-  width: 60px;
+  width: 50px;
   display: flex;
   justify-content: center;
 }
 
 .center-add-btn {
   position: absolute;
-  top: -30px;
-  width: 52px;
-  height: 52px;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  top: -28px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
   color: white;
-  border: 4px solid #ffffff;
+  border: 4px solid #f8fafc;
   border-radius: 50%;
   font-size: 26px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.4);
 }
 
-.center-add-btn:active {
-  transform: scale(0.95);
+/* Analytics View Cards */
+.categories-full-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.category-box-card {
+  background: white;
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.category-box-card.active {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.cat-box-icon { font-size: 20px; }
+.cat-box-name { font-size: 13px; color: #64748b; font-weight: 600; }
+.cat-box-amount { font-size: 16px; font-weight: bold; color: #1e1b4b; }
+
+.profile-card {
+  background: white;
+  padding: 30px 20px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.profile-avatar-large {
+  width: 70px;
+  height: 70px;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px auto;
+}
+
+.profile-email {
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+body.dark-mode .app-container {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+body.dark-mode .balance-card-floating,
+body.dark-mode .category-pill,
+body.dark-mode .bank-item,
+body.dark-mode .category-box-card,
+body.dark-mode .modal-content,
+body.dark-mode .profile-card {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .input-field,
+body.dark-mode .select-field {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .bank-text,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode .greeting-name,
+body.dark-mode .cat-box-amount {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .bank-subtext,
+body.dark-mode .stat-title,
+body.dark-mode .cat-box-name {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .bottom-nav {
+  background-color: #1e293b !important;
+  border-top: 1px solid #334155 !important;
+}
+
+body.dark-mode .nav-item {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .nav-item.active {
+  color: #a78bfa !important;
+}
+
+body.dark-mode .category-box-card.active {
+  background: #312e81 !important;
+  border-color: #818cf8 !important;
 }
