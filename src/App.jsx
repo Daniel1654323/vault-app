@@ -35,6 +35,11 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   
+  // מצב כהה
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('vault_dark_mode') === 'true';
+  });
+
   // טופס הוספה
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
@@ -60,6 +65,15 @@ function App() {
   const [newCatBudget, setNewCatBudget] = useState('');
 
   const [showUpdatesModal, setShowUpdatesModal] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('vault_dark_mode', darkMode);
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -368,6 +382,15 @@ function App() {
 
               <button 
                 type="button" 
+                onClick={() => setDarkMode(!darkMode)} 
+                title={darkMode ? "עבור למצב בהיר" : "עבור למצב כהה"}
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+              >
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+
+              <button 
+                type="button" 
                 onClick={() => setShowUpdatesModal(true)} 
                 style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
               >
@@ -416,14 +439,17 @@ function App() {
             <div className="categories-grid">
               {categoryTotals.filter(c => c.id !== 'salary').map((cat) => {
                 return (
-                  <div key={cat.id} className="category-pill" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '12px', cursor: 'pointer' }} onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '14px', color: '#1e1b4b' }}>
-                        {cat.icon} {cat.name}
-                      </span>
-                      <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#475569' }}>
-                        ₪{cat.total.toFixed(0)}
-                      </span>
+                  <div 
+                    key={cat.id} 
+                    className="category-pill" 
+                    onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '13px', color: 'var(--text-main)' }}>
+                      <span>{cat.icon}</span>
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat.name}</span>
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 'bold', marginTop: '8px', color: 'var(--text-main)' }}>
+                      ₪{cat.total.toFixed(0)}
                     </div>
                   </div>
                 );
@@ -513,7 +539,7 @@ function App() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '10px' }}>
-              <h3 style={{ fontSize: '15px', color: '#1e1b4b' }}>
+              <h3 style={{ fontSize: '15px' }}>
                 תוצאות סינון ({finalFilteredTransactions.length} פריטים)
               </h3>
               {(selectedCategoryFilter !== 'all' || searchQuery || selectedPaymentFilter !== 'all') && (
@@ -524,7 +550,7 @@ function App() {
             </div>
             
             {finalFilteredTransactions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '30px', background: '#f8fafc', borderRadius: '12px', color: '#64748b', fontSize: '14px' }}>
+              <div style={{ textAlign: 'center', padding: '30px', borderRadius: '12px', color: '#64748b', fontSize: '14px' }}>
                 לא נמצאו תנועות העונות על הקריטריונים
               </div>
             ) : (
@@ -564,7 +590,10 @@ function App() {
             <div className="profile-avatar-large">👤</div>
             <h2>{userDisplayName}</h2>
             <p className="profile-email">{session.user.email}</p>
-            <div className="profile-settings-list" style={{ marginTop: '20px' }}>
+            <div className="profile-settings-list" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button type="button" onClick={() => setDarkMode(!darkMode)} style={{ width: '100%', background: 'var(--card-bg)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+                {darkMode ? '☀️ מצב בהיר' : '🌙 מצב כהה'}
+              </button>
               <button type="button" onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
                 🚪 התנתק מהמערכת
               </button>
@@ -577,17 +606,16 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div className="modal-header">
-              <h3>📢 עדכונים חדשים (Vault v2.0)</h3>
+              <h3>📢 עדכונים חדשים (Vault v2.1)</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
             </div>
-            <div style={{ padding: '10px 0', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#7c3aed' }}>שדרוגים גדולים נוספו למערכת:</strong>
-                <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+            <div style={{ padding: '10px 0', fontSize: '14px', lineHeight: '1.6' }}>
+              <div style={{ padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid var(--border-color)' }}>
+                <strong style={{ color: '#7c3aed' }}>שדרוגים חדשים במערכת:</strong>
+                <p style={{ margin: '5px 0 0 0', fontSize: '13px' }}>
+                  • 🌙 <strong>מצב כהה (Dark Mode):</strong> תמיכה מלאה בעיצוב כהה לעיניים, נשמר אוטומטית במכשיר.<br/>
                   • 📅 <strong>בורר חודשים:</strong> מעבר נוח בין סיכומים של חודשים שונים.<br/>
-                  • 🎯 <strong>סיכום קטגוריות:</strong> מעקב אחר סך ההוצאות לכל קטגוריה.<br/>
-                  • 🔄 <strong>הוראות קבע:</strong> סימון תנועות כקבועות ושכפולן המהיר לחודש הנוכחי.<br/>
-                  • 🔍 <strong>חיפוש וסינון:</strong> חיפוש חופשי וסינון לפי אמצעי תשלום.
+                  • 🎯 <strong>סיכום קטגוריות נקי:</strong> הצגת סכום ההוצאות לכל קטגוריה ללא תקרת תקציב.
                 </p>
               </div>
             </div>
@@ -619,12 +647,12 @@ function App() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>תאריך התנועה:</label>
+                <label style={{ fontSize: '13px', fontWeight: '500' }}>תאריך התנועה:</label>
                 <input type="date" className="input-field" value={transDate} onChange={(e) => setTransDate(e.target.value)} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>בחר קטגוריה:</label>
+                <label style={{ fontSize: '13px', fontWeight: '500' }}>בחר קטגוריה:</label>
                 <select className="input-field select-field" value={category} onChange={(e) => setCategory(e.target.value)}>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
@@ -633,7 +661,7 @@ function App() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>אמצעי תשלום:</label>
+                <label style={{ fontSize: '13px', fontWeight: '500' }}>אמצעי תשלום:</label>
                 <select className="input-field select-field" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                   {PAYMENT_METHODS.map((pm) => (
                     <option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>
@@ -641,7 +669,7 @@ function App() {
                 </select>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569', marginTop: '5px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', marginTop: '5px' }}>
                 <input type="checkbox" id="recurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }} />
                 <label htmlFor="recurring" style={{ cursor: 'pointer' }}>תנועה קבועה חודשית (הוראת קבע)</label>
               </div>
@@ -662,7 +690,7 @@ function App() {
             <form onSubmit={handleAddCategory} className="form-group">
               <input type="text" className="input-field" placeholder="שם הקטגוריה (למשל: חיות מחמד)" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus required />
               <input type="text" className="input-field" placeholder="אייקון או אימוג'י (למשל: 🐱)" value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} maxLength={4} />
-              <input type="number" className="input-field" placeholder="תקציב חודשי מקסימלי (₪)" value={newCatBudget} onChange={(e) => setNewCatBudget(e.target.value)} />
+              <input type="number" className="input-field" placeholder="תקציב חודשי מקסימלי (₪) - אופציונלי" value={newCatBudget} onChange={(e) => setNewCatBudget(e.target.value)} />
               <button type="submit" className="submit-btn">צור קטגוריה</button>
             </form>
           </div>
@@ -675,7 +703,14 @@ function App() {
           <span className="nav-text">פרופיל</span>
         </button>
 
-        <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
+        <button 
+          type="button" 
+          className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} 
+          onClick={() => {
+            setSelectedCategoryFilter('all');
+            setActiveTab('analytics');
+          }}
+        >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
           <span className="nav-text">ארנק</span>
         </button>
