@@ -247,7 +247,7 @@ body {
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -443,17 +443,22 @@ body {
   margin-top: 4px;
 }
 
-/* Dark Mode Styles */
+/* ========================================== */
+/* DARK MODE STYLES - המצב הכהה המעודכן     */
+/* ========================================== */
+
 body.dark-mode {
-  background-color: #0f172a !important;
+  background-color: #0b0f19 !important;
   color: #f8fafc !important;
 }
 
 body.dark-mode .app-container {
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
+/* כרטיסים ומודלים מרכזיים */
 body.dark-mode .balance-card-floating,
 body.dark-mode .category-pill,
 body.dark-mode .bank-item,
@@ -462,31 +467,62 @@ body.dark-mode .modal-content,
 body.dark-mode .profile-card {
   background-color: #1e293b !important;
   color: #f8fafc !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
   border-color: #334155 !important;
 }
 
+/* רקע לאייקונים של תנועות במצב כהה */
+body.dark-mode .bank-icon-bg {
+  background-color: #0f172a !important;
+}
+
+/* שדות קלט, חיפוש ותפריטי בחירה */
 body.dark-mode .input-field,
 body.dark-mode .select-field {
   background-color: #0f172a !important;
   color: #f8fafc !important;
-  border-color: #334155 !important;
+  border-color: #475569 !important;
+}
+body.dark-mode .input-field::placeholder {
+  color: #94a3b8 !important;
 }
 
+/* כפתורי בחירת סוג (הוצאה / הכנסה) במודל */
+body.dark-mode .type-btn {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #94a3b8 !important;
+}
+
+/* כותרות וטקסטים מרכזיים */
 body.dark-mode .bank-text,
 body.dark-mode h2,
 body.dark-mode h3,
 body.dark-mode .greeting-name,
-body.dark-mode .cat-box-amount {
+body.dark-mode .cat-box-amount,
+body.dark-mode .balance-amount {
   color: #f8fafc !important;
 }
 
+/* כותרות משניות ורמזים */
 body.dark-mode .bank-subtext,
 body.dark-mode .stat-title,
-body.dark-mode .cat-box-name {
+body.dark-mode .cat-box-name,
+body.dark-mode .balance-top-row,
+body.dark-mode .greeting-sub,
+body.dark-mode .profile-email {
   color: #94a3b8 !important;
 }
 
+/* קווים מפרידים */
+body.dark-mode .stats-row {
+  border-top-color: #334155 !important;
+}
+body.dark-mode .stat-divider {
+  background: #334155 !important;
+}
+
+/* תפריט ניווט תחתון */
 body.dark-mode .bottom-nav {
   background-color: #1e293b !important;
   border-top: 1px solid #334155 !important;
@@ -500,7 +536,14 @@ body.dark-mode .nav-item.active {
   color: #a78bfa !important;
 }
 
-body.dark-mode .category-box-card.active {
-  background: #312e81 !important;
-  border-color: #818cf8 !important;
+body.dark-mode .center-add-btn {
+  border-color: #0f172a !important;
+}
+
+/* תיקון צבע הכותרות והסכומים בכל כרטיסיות הקטגוריות במצב כהה */
+body.dark-mode .category-pill span,
+body.dark-mode .category-box-card span,
+body.dark-mode .cat-box-name,
+body.dark-mode .cat-box-amount {
+  color: #f8fafc !important;
 }
