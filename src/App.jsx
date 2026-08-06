@@ -75,8 +75,26 @@ function App() {
   useEffect(() => {
     if (session) {
       fetchTransactions();
+      fetchCategories();
     }
   }, [session]);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching categories:', error);
+    } else if (data && data.length > 0) {
+      const customCats = data.map(d => ({
+        id: d.id,
+        name: d.name,
+        icon: d.icon
+      }));
+      setCategories([...DEFAULT_CATEGORIES, ...customCats.filter(c => !DEFAULT_CATEGORIES.some(def => def.id === c.id))]);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -202,7 +220,7 @@ function App() {
     }
   };
 
-  const handleAddCategory = (e) => {
+  const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
 
@@ -210,14 +228,24 @@ function App() {
     const newCategoryObj = {
       id: newId,
       name: newCatName.trim(),
-      icon: newCatIcon || '📦'
+      icon: newCatIcon || '📦',
+      user_id: session.user.id
     };
 
-    setCategories([...categories, newCategoryObj]);
-    setCategory(newId);
-    setNewCatName('');
-    setNewCatIcon('🏷️');
-    setShowCategoryModal(false);
+    const { error } = await supabase
+      .from('categories')
+      .insert([newCategoryObj]);
+
+    if (error) {
+      console.error('Error saving category:', error);
+      alert('שגיאה בשמירת הקטגוריה במסד הנתונים');
+    } else {
+      setCategories([...categories, { id: newId, name: newCatName.trim(), icon: newCatIcon || '📦' }]);
+      setCategory(newId);
+      setNewCatName('');
+      setNewCatIcon('🏷️');
+      setShowCategoryModal(false);
+    }
   };
 
   const handleAddRecurringTransactions = async () => {
@@ -571,14 +599,14 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div className="modal-header">
-              <h3>📢 עדכונים חדשים (Vault v2.2)</h3>
+              <h3>📢 עדכונים חדשים (Vault v2.3)</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
             </div>
             <div style={{ padding: '10px 0', color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>
               <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
-                <strong style={{ color: '#7c3aed' }}>ניקיון ופשטות:</strong>
+                <strong style={{ color: '#7c3aed' }}>שמירת קטגוריות:</strong>
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#64748b' }}>
-                  • הוסרו שאלון התקציב הראשוני ומנגנון התקציבים כדי לתת חוויית משתמש נקייה ומהירה יותר.
+                  • מעה״ש כעת שומר את הקטגוריות החדשות שאתה יוצר ישירות ב-Supabase כך שיישארו איתך לתמיד.
                 </p>
               </div>
             </div>
