@@ -3,15 +3,6 @@ import { supabase } from './supabaseClient';
 import { TRANSLATIONS } from './translations';
 import './App.css';
 
-const PAYMENT_METHODS = [
-  { id: 'credit_card', name: 'כרטיס אשראי', icon: '💳' },
-  { id: 'bit', name: 'Bit', icon: '📱' },
-  { id: 'paypal', name: 'PayPal', icon: '🅿️' },
-  { id: 'cash', name: 'מזומן', icon: '💵' },
-  { id: 'bank_transfer', name: 'העברה בנקאית', icon: '🏦' },
-  { id: 'other', name: 'אחר', icon: '🔄' }
-];
-
 function App() {
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -46,6 +37,16 @@ function App() {
   });
 
   const t = TRANSLATIONS[language] || TRANSLATIONS.he;
+
+  // --- אמצעי תשלום דינמיים לפי שפה ---
+  const PAYMENT_METHODS = [
+    { id: 'credit_card', name: t.paymentMethods?.credit_card || 'כרטיס אשראי', icon: '💳' },
+    { id: 'bit', name: t.paymentMethods?.bit || 'Bit', icon: '📱' },
+    { id: 'paypal', name: t.paymentMethods?.paypal || 'PayPal', icon: '🅿️' },
+    { id: 'cash', name: t.paymentMethods?.cash || 'מזומן', icon: '💵' },
+    { id: 'bank_transfer', name: t.paymentMethods?.bank_transfer || 'העברה בנקאית', icon: '🏦' },
+    { id: 'other', name: t.paymentMethods?.other || 'אחר', icon: '🔄' }
+  ];
 
   const getInitialCategories = (currentT) => [
     { id: 'food', name: currentT.categories?.food || 'אוכל וקניות', icon: '🛒', budget: 2000 },
@@ -693,7 +694,7 @@ function App() {
               <div style={{ padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid var(--border-color)' }}>
                 <strong style={{ color: '#7c3aed' }}>שדרוגים חדשים במערכת:</strong>
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px' }}>
-                  • 🌍 <strong>החלפת שפות:</strong> תמיכה מלאה בעברית, אנגלית, ספרדית ורוסית כולל שמות הקטגוריות.
+                  • 🌍 <strong>החלפת שפות:</strong> תמיכה מלאה בעברית, אנגלית, ספרדית ורוסית כולל שמות הקטגוריות ואמצעי התשלום.
                 </p>
               </div>
             </div>
