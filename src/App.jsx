@@ -324,8 +324,8 @@ function App() {
 
   if (!session) {
     return (
-      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc', padding: '20px' }}>
-        <div style={{ background: 'white', padding: '35px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', width: '100%', maxWidth: '400px' }}>
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc', padding: '20px', boxSizing: 'border-box', width: '100%', overflowX: 'hidden' }}>
+        <div style={{ background: 'white', padding: '35px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', width: '100%', maxWidth: '400px', boxSizing: 'border-box' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '25px' }}>
             <h1 style={{ fontSize: '24px', color: '#1e1b4b', marginBottom: '8px' }}>💰 Vault Project</h1>
@@ -333,29 +333,29 @@ function App() {
           </div>
 
           {authError && (
-            <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px', textAlign: 'center', boxSizing: 'border-box' }}>
               {authError}
             </div>
           )}
 
           {authSuccess && (
-            <div style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '13px', textAlign: 'center', boxSizing: 'border-box' }}>
               {authSuccess}
             </div>
           )}
 
           {authMode === 'login' ? (
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', boxSizing: 'border-box' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>התחברות לחשבון</h2>
-              <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <input type="password" placeholder="סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', boxSizing: 'border-box' }} />
+              <input type="password" placeholder="סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%', boxSizing: 'border-box' }} />
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#475569', cursor: 'pointer' }}>
                 <input type="checkbox" id="remember" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }} />
                 <label htmlFor="remember" style={{ cursor: 'pointer' }}>זכור אותי במכשיר זה</label>
               </div>
 
-              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>התחבר</button>
+              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold', width: '100%', boxSizing: 'border-box' }}>התחבר</button>
               
               <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#64748b' }}>
                 עדיין אין לך חשבון?{' '}
@@ -363,12 +363,12 @@ function App() {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', boxSizing: 'border-box' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>יצירת חשבון חדש</h2>
-              <input type="text" placeholder="שם מלא" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-              <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <input type="password" placeholder="בחר סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>הירשם</button>
+              <input type="text" placeholder="שם מלא" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} required style={{ width: '100%', boxSizing: 'border-box' }} />
+              <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', boxSizing: 'border-box' }} />
+              <input type="password" placeholder="בחר סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%', boxSizing: 'border-box' }} />
+              <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold', width: '100%', boxSizing: 'border-box' }}>הירשם</button>
 
               <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px', color: '#64748b' }}>
                 כבר יש לך חשבון?{' '}
@@ -377,13 +377,12 @@ function App() {
             </form>
           )}
 
-          {/* כפתור התחברות חברתית (Google בלבד) */}
-          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '15px' }}>
+          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '15px', width: '100%', boxSizing: 'border-box' }}>
             <div style={{ textAlign: 'center', color: '#64748b', fontSize: '12px', marginBottom: '2px' }}>או המשך באמצעות</div>
             <button 
               type="button"
               onClick={() => handleSocialLogin('google')} 
-              style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: '500', color: '#1e293b' }}
+              style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: '500', color: '#1e293b', width: '100%', boxSizing: 'border-box' }}
             >
               🌐 התחבר עם Google
             </button>
@@ -422,10 +421,10 @@ function App() {
   });
 
   return (
-    <div className="app-container">
-      <div className="header-bg">
-        <div className="container">
-          <header className="app-header">
+    <div className="app-container" style={{ width: '100%', maxWidth: '100vw', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <div className="header-bg" style={{ width: '100%', boxSizing: 'border-box' }}>
+        <div className="container" style={{ width: '100%', boxSizing: 'border-box', maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
+          <header className="app-header" style={{ width: '100%', boxSizing: 'border-box' }}>
             <div>
               <span className="greeting-sub">{t.greeting}</span>
               <h2 className="greeting-name" style={{ fontSize: '16px', fontWeight: 'bold', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -437,7 +436,7 @@ function App() {
               <select 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', outline: 'none' }}
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', outline: 'none', boxSizing: 'border-box' }}
               >
                 <option value="all" style={{ color: '#333' }}>{language === 'he' ? 'כל החודשים' : 'All Months'}</option>
                 {availableMonths.map(m => (
@@ -448,20 +447,20 @@ function App() {
               <button 
                 type="button" 
                 onClick={() => setShowUpdatesModal(true)} 
-                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', boxSizing: 'border-box' }}
               >
                 🔔
               </button>
             </div>
           </header>
 
-          <div className="balance-card-floating">
+          <div className="balance-card-floating" style={{ width: '100%', boxSizing: 'border-box' }}>
             <div className="balance-top-row">
               <span className="balance-label">{selectedMonth === 'all' ? t.allTime : `${t.monthBalance} ${selectedMonth}`}</span>
               <span className="dots-menu">•••</span>
             </div>
             <h1 className="balance-amount">₪{total}</h1>
-            <div className="stats-row">
+            <div className="stats-row" style={{ width: '100%', boxSizing: 'border-box' }}>
               <div className="stat-item">
                 <span className="stat-icon-wrapper income-icon">⬇</span>
                 <div>
@@ -482,7 +481,7 @@ function App() {
         </div>
       </div>
 
-      <div className="container main-content">
+      <div className="container main-content" style={{ width: '100%', boxSizing: 'border-box', maxWidth: '600px', margin: '0 auto', padding: '0 16px 80px 16px' }}>
         {activeTab === 'home' && (
           <>
             <div className="section-header">
@@ -492,13 +491,14 @@ function App() {
               </button>
             </div>
             
-            <div className="categories-grid">
+            <div className="categories-grid" style={{ width: '100%', boxSizing: 'border-box' }}>
               {categoryTotals.filter(c => c.id !== 'salary').map((cat) => {
                 return (
                   <div 
                     key={cat.id} 
                     className="category-pill" 
                     onClick={() => { setSelectedCategoryFilter(cat.id); setActiveTab('analytics'); }}
+                    style={{ boxSizing: 'border-box' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '13px', color: 'var(--text-main)' }}>
                       <span>{cat.icon}</span>
@@ -519,19 +519,19 @@ function App() {
             {monthFilteredTransactions.length === 0 ? (
               <p className="empty-msg">{t.noTransactions}</p>
             ) : (
-              <ul className="bank-list">
+              <ul className="bank-list" style={{ width: '100%', boxSizing: 'border-box', padding: 0 }}>
                 {monthFilteredTransactions.slice(0, 5).map((tItem) => {
                   const catObj = categories.find((c) => c.id === (tItem.category || 'general'));
                   const pmObj = PAYMENT_METHODS.find((p) => p.id === tItem.paymentMethod);
                   return (
-                    <li key={tItem.id} className="bank-item">
-                      <div className="bank-left">
+                    <li key={tItem.id} className="bank-item" style={{ width: '100%', boxSizing: 'border-box' }}>
+                      <div className="bank-left" style={{ overflow: 'hidden' }}>
                         <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
-                        <div className="bank-details">
-                          <span className="bank-text">
+                        <div className="bank-details" style={{ overflow: 'hidden' }}>
+                          <span className="bank-text" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
                             {tItem.text} {tItem.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>{t.recurringBadge}</span>}
                           </span>
-                          <span className="bank-subtext">
+                          <span className="bank-subtext" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
                             {catObj ? catObj.name : t.general} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {tItem.date}
                           </span>
                         </div>
@@ -551,30 +551,30 @@ function App() {
         )}
 
         {activeTab === 'analytics' && (
-          <div className="analytics-view">
-            <div className="history-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          <div className="analytics-view" style={{ width: '100%', boxSizing: 'border-box' }}>
+            <div className="history-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', boxSizing: 'border-box' }}>
                 <h3>{t.advancedSearch}</h3>
                 <button type="button" onClick={handleAddRecurringTransactions} style={{ background: '#ede9fe', color: '#7c3aed', border: '1px solid #c4b5fd', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
                   {t.loadRecurring}
                 </button>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap', boxSizing: 'border-box' }}>
                 <input 
                   type="text" 
                   placeholder={t.searchPlaceholder} 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="input-field"
-                  style={{ flex: '1', minWidth: '150px', padding: '8px 12px', fontSize: '13px', margin: 0 }}
+                  style={{ flex: '1', minWidth: '150px', padding: '8px 12px', fontSize: '13px', margin: 0, boxSizing: 'border-box' }}
                 />
                 
                 <select 
                   value={selectedPaymentFilter} 
                   onChange={(e) => setSelectedPaymentFilter(e.target.value)}
                   className="input-field select-field"
-                  style={{ flex: '1', minWidth: '130px', padding: '8px', fontSize: '13px', margin: 0 }}
+                  style={{ flex: '1', minWidth: '130px', padding: '8px', fontSize: '13px', margin: 0, boxSizing: 'border-box' }}
                 >
                   <option value="all">{t.allPaymentMethods}</option>
                   {PAYMENT_METHODS.map(pm => (
@@ -584,9 +584,9 @@ function App() {
               </div>
             </div>
 
-            <div className="categories-full-grid" style={{ marginTop: '15px' }}>
+            <div className="categories-full-grid" style={{ marginTop: '15px', width: '100%', boxSizing: 'border-box' }}>
               {categoryTotals.map((cat) => (
-                <div key={cat.id} className={`category-box-card ${selectedCategoryFilter === cat.id ? 'active' : ''}`} onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === cat.id ? 'all' : cat.id)}>
+                <div key={cat.id} className={`category-box-card ${selectedCategoryFilter === cat.id ? 'active' : ''}`} onClick={() => setSelectedCategoryFilter(selectedCategoryFilter === cat.id ? 'all' : cat.id)} style={{ boxSizing: 'border-box' }}>
                   <span className="cat-box-icon">{cat.icon}</span>
                   <span className="cat-box-name">{cat.name}</span>
                   <span className="cat-box-amount">₪{cat.total.toFixed(2)}</span>
@@ -594,7 +594,7 @@ function App() {
               ))}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '10px', width: '100%', boxSizing: 'border-box' }}>
               <h3 style={{ fontSize: '15px' }}>
                 {t.filterResults} ({finalFilteredTransactions.length} {t.items})
               </h3>
@@ -606,23 +606,23 @@ function App() {
             </div>
             
             {finalFilteredTransactions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '30px', borderRadius: '12px', color: '#64748b', fontSize: '14px' }}>
+              <div style={{ textAlign: 'center', padding: '30px', borderRadius: '12px', color: '#64748b', fontSize: '14px', width: '100%', boxSizing: 'border-box' }}>
                 {t.noResults}
               </div>
             ) : (
-              <ul className="bank-list">
+              <ul className="bank-list" style={{ width: '100%', boxSizing: 'border-box', padding: 0 }}>
                 {finalFilteredTransactions.map((tItem) => {
                   const catObj = categories.find((c) => c.id === (tItem.category || 'general'));
                   const pmObj = PAYMENT_METHODS.find((p) => p.id === tItem.paymentMethod);
                   return (
-                    <li key={tItem.id} className="bank-item">
-                      <div className="bank-left">
+                    <li key={tItem.id} className="bank-item" style={{ width: '100%', boxSizing: 'border-box' }}>
+                      <div className="bank-left" style={{ overflow: 'hidden' }}>
                         <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
-                        <div className="bank-details">
-                          <span className="bank-text">
+                        <div className="bank-details" style={{ overflow: 'hidden' }}>
+                          <span className="bank-text" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
                             {tItem.text} {tItem.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>{t.recurringBadge}</span>}
                           </span>
-                          <span className="bank-subtext">
+                          <span className="bank-subtext" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
                             {catObj ? catObj.name : t.general} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {tItem.date}
                           </span>
                         </div>
@@ -642,20 +642,20 @@ function App() {
         )}
 
         {activeTab === 'profile' && (
-          <div className="profile-card">
+          <div className="profile-card" style={{ width: '100%', boxSizing: 'border-box' }}>
             <div className="profile-avatar-large">👤</div>
             <h2>{userDisplayName}</h2>
             <p className="profile-email">{session.user.email}</p>
             
-            <div className="profile-settings-list" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+            <div className="profile-settings-list" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'start', width: '100%', boxSizing: 'border-box' }}>
                 <label style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{t.language}:</label>
                 <select 
                   value={language} 
                   onChange={(e) => setLanguage(e.target.value)}
                   className="input-field select-field"
-                  style={{ width: '100%', padding: '10px', fontSize: '14px', margin: 0 }}
+                  style={{ width: '100%', padding: '10px', fontSize: '14px', margin: 0, boxSizing: 'border-box' }}
                 >
                   <option value="he">🇮🇱 עברית</option>
                   <option value="en">🇺🇸 English</option>
@@ -664,11 +664,11 @@ function App() {
                 </select>
               </div>
 
-              <button type="button" onClick={() => setDarkMode(!darkMode)} style={{ width: '100%', background: 'var(--card-bg)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+              <button type="button" onClick={() => setDarkMode(!darkMode)} style={{ width: '100%', background: 'var(--card-bg)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', boxSizing: 'border-box' }}>
                 {darkMode ? `☀️ ${t.lightMode}` : `🌙 ${t.darkMode}`}
               </button>
 
-              <button type="button" onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+              <button type="button" onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', boxSizing: 'border-box' }}>
                 🚪 {t.logout}
               </button>
             </div>
@@ -677,14 +677,14 @@ function App() {
       </div>
 
       {showUpdatesModal && (
-        <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', maxHeight: '90vh', overflowY: 'auto', paddingBottom: '40px' }}>
+        <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)} style={{ boxSizing: 'border-box' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ boxSizing: 'border-box', width: '90%', maxWidth: '400px' }}>
             <div className="modal-header">
               <h3>{t.updatesTitle}</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
             </div>
-            <div style={{ padding: '10px 0', fontSize: '14px', lineHeight: '1.6' }}>
-              <div style={{ padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid var(--border-color)' }}>
+            <div className="modal-body-scroll">
+              <div style={{ padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid var(--border-color)', boxSizing: 'border-box' }}>
                 <strong style={{ color: '#7c3aed' }}>שדרוגים חדשים במערכת:</strong>
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px' }}>
                   • 🌍 <strong>החלפת שפות:</strong> תמיכה מלאה בעברית, אנגלית, ספרדית ורוסית כולל שמות הקטגוריות ואמצעי התשלום.
@@ -696,80 +696,84 @@ function App() {
       )}
 
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: '50px' }}>
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)} style={{ boxSizing: 'border-box' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ boxSizing: 'border-box', width: '90%', maxWidth: '400px' }}>
             <div className="modal-header">
               <h3>הוספת הכנסה או הוצאה</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowAddModal(false)}>✕</button>
             </div>
             
-            {formError && (
-              <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '13px' }}>
-                {formError}
-              </div>
-            )}
+            <div className="modal-body-scroll" style={{ width: '100%', boxSizing: 'border-box' }}>
+              {formError && (
+                <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '13px', boxSizing: 'border-box' }}>
+                  {formError}
+                </div>
+              )}
 
-            <form onSubmit={addTransaction} className="form-group">
-              <input type="text" className="input-field" placeholder={t.descPlaceholder} value={text} onChange={(e) => setText(e.target.value)} autoFocus />
-              <input type="number" step="any" className="input-field" placeholder={t.amountPlaceholder} value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <form onSubmit={addTransaction} className="form-group" style={{ width: '100%', boxSizing: 'border-box' }}>
+                <input type="text" className="input-field" placeholder={t.descPlaceholder} value={text} onChange={(e) => setText(e.target.value)} autoFocus style={{ width: '100%', boxSizing: 'border-box' }} />
+                <input type="number" step="any" className="input-field" placeholder={t.amountPlaceholder} value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
 
-              <div className="radio-group">
-                <button type="button" className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`} onClick={() => setType('expense')}>{t.expenseBtn}</button>
-                <button type="button" className={`type-btn ${type === 'income' ? 'active-income' : ''}`} onClick={() => setType('income')}>{t.incomeBtn}</button>
-              </div>
+                <div className="radio-group" style={{ width: '100%', boxSizing: 'border-box' }}>
+                  <button type="button" className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`} onClick={() => setType('expense')}>{t.expenseBtn}</button>
+                  <button type="button" className={`type-btn ${type === 'income' ? 'active-income' : ''}`} onClick={() => setType('income')}>{t.incomeBtn}</button>
+                </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.transDateLabel}</label>
-                <input type="date" className="input-field" value={transDate} onChange={(e) => setTransDate(e.target.value)} />
-              </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.transDateLabel}</label>
+                  <input type="date" className="input-field" value={transDate} onChange={(e) => setTransDate(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.categoryLabel}</label>
-                <select className="input-field select-field" value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
-                  ))}
-                </select>
-              </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.categoryLabel}</label>
+                  <select className="input-field select-field" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }}>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.paymentMethodLabel}</label>
-                <select className="input-field select-field" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                  {PAYMENT_METHODS.map((pm) => (
-                    <option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>
-                  ))}
-                </select>
-              </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.paymentMethodLabel}</label>
+                  <select className="input-field select-field" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }}>
+                    {PAYMENT_METHODS.map((pm) => (
+                      <option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', marginTop: '5px' }}>
-                <input type="checkbox" id="recurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }} />
-                <label htmlFor="recurring" style={{ cursor: 'pointer' }}>{t.recurringCheckbox}</label>
-              </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', marginTop: '5px', width: '100%', boxSizing: 'border-box' }}>
+                  <input type="checkbox" id="recurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }} />
+                  <label htmlFor="recurring" style={{ cursor: 'pointer' }}>{t.recurringCheckbox}</label>
+                </div>
 
-              <button type="submit" className="submit-btn" style={{ marginTop: '10px' }}>{t.saveAction}</button>
-            </form>
+                <button type="submit" className="submit-btn" style={{ marginTop: '10px', width: '100%', boxSizing: 'border-box' }}>{t.saveAction}</button>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {showCategoryModal && (
-        <div className="modal-overlay" onClick={() => setShowCategoryModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: '40px' }}>
+        <div className="modal-overlay" onClick={() => setShowCategoryModal(false)} style={{ boxSizing: 'border-box' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ boxSizing: 'border-box', width: '90%', maxWidth: '400px' }}>
             <div className="modal-header">
               <h3>{t.newCategoryTitle}</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowCategoryModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleAddCategory} className="form-group">
-              <input type="text" className="input-field" placeholder={t.catNamePlaceholder} value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus required />
-              <input type="text" className="input-field" placeholder={t.catIconPlaceholder} value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} maxLength={4} />
-              <input type="number" className="input-field" placeholder={t.catBudgetPlaceholder} value={newCatBudget} onChange={(e) => setNewCatBudget(e.target.value)} />
-              <button type="submit" className="submit-btn">{t.createCatBtn}</button>
-            </form>
+            <div className="modal-body-scroll" style={{ width: '100%', boxSizing: 'border-box' }}>
+              <form onSubmit={handleAddCategory} className="form-group" style={{ width: '100%', boxSizing: 'border-box' }}>
+                <input type="text" className="input-field" placeholder={t.catNamePlaceholder} value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus required style={{ width: '100%', boxSizing: 'border-box' }} />
+                <input type="text" className="input-field" placeholder={t.catIconPlaceholder} value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} maxLength={4} style={{ width: '100%', boxSizing: 'border-box' }} />
+                <input type="number" className="input-field" placeholder={t.catBudgetPlaceholder} value={newCatBudget} onChange={(e) => setNewCatBudget(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
+                <button type="submit" className="submit-btn" style={{ width: '100%', boxSizing: 'border-box' }}>{t.createCatBtn}</button>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
-      <nav className="bottom-nav">
+      <nav className="bottom-nav" style={{ boxSizing: 'border-box' }}>
         <button type="button" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           <span className="nav-text">{t.profile}</span>
