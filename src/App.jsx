@@ -15,7 +15,7 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
-  // --- לוגיקת התחברות חברתית (Google / Apple) ---
+  // --- לוגיקת התחברות חברתית (Google בלבד) ---
   const handleSocialLogin = async (provider) => {
     setAuthError('');
     const { error } = await supabase.auth.signInWithOAuth({
@@ -377,7 +377,7 @@ function App() {
             </form>
           )}
 
-          {/* כפתורי התחברות חברתית (Google / Apple) */}
+          {/* כפתור התחברות חברתית (Google בלבד) */}
           <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '15px' }}>
             <div style={{ textAlign: 'center', color: '#64748b', fontSize: '12px', marginBottom: '2px' }}>או המשך באמצעות</div>
             <button 
@@ -386,13 +386,6 @@ function App() {
               style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: '500', color: '#1e293b' }}
             >
               🌐 התחבר עם Google
-            </button>
-            <button 
-              type="button"
-              onClick={() => handleSocialLogin('apple')} 
-              style={{ padding: '10px', border: '1px solid #000', borderRadius: '8px', cursor: 'pointer', background: '#000', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: '500' }}
-            >
-               התחבר עם Apple
             </button>
           </div>
 
