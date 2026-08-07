@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { TRANSLATIONS } from './translations';
 import './App.css';
+import Wallet from './Wallet';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -549,6 +550,8 @@ function App() {
             )}
           </>
         )}
+        
+        {activeTab === 'wallet' && <Wallet />}
 
         {activeTab === 'analytics' && (
           <div className="analytics-view" style={{ width: '100%', boxSizing: 'border-box' }}>
@@ -781,11 +784,8 @@ function App() {
 
         <button 
           type="button" 
-          className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} 
-          onClick={() => {
-            setSelectedCategoryFilter('all');
-            setActiveTab('analytics');
-          }}
+          className={`nav-item ${activeTab === 'wallet' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('wallet')}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
           <span className="nav-text">{t.wallet}</span>
