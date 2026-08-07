@@ -678,7 +678,7 @@ function App() {
 
       {showUpdatesModal && (
         <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', maxHeight: '90vh', overflowY: 'auto', paddingBottom: '40px' }}>
             <div className="modal-header">
               <h3>{t.updatesTitle}</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
@@ -697,9 +697,9 @@ function App() {
 
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: '50px' }}>
             <div className="modal-header">
-              <h3>{t.addTransactionTitle}</h3>
+              <h3>הוספת הכנסה או הוצאה</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowAddModal(false)}>✕</button>
             </div>
             
@@ -754,7 +754,7 @@ function App() {
 
       {showCategoryModal && (
         <div className="modal-overlay" onClick={() => setShowCategoryModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto', paddingBottom: '40px' }}>
             <div className="modal-header">
               <h3>{t.newCategoryTitle}</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowCategoryModal(false)}>✕</button>

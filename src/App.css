@@ -131,6 +131,7 @@ body {
   font-weight: 800;
   margin-bottom: 16px;
   letter-spacing: -0.5px;
+  color: var(--text-main);
 }
 
 .stats-row {
@@ -359,7 +360,7 @@ body {
   border: 1px dashed var(--border-color);
 }
 
-/* --- מודלים (Modals) ואנימציות פתיחה --- */
+/* --- מודלים (Modals) ואנימציות פתיחה נקיות --- */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -379,21 +380,24 @@ body {
 .modal-content {
   background: var(--card-bg);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   padding: 24px;
   border-radius: 24px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   border: 1px solid var(--border-color);
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: 85vh;
+  overflow-y: visible; 
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
 }
 
 .modal-header h3 {
@@ -427,7 +431,7 @@ body {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .input-field {
