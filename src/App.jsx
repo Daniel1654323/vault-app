@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import { TRANSLATIONS } from './translations';
 import './App.css';
-
-const INITIAL_CATEGORIES = [
-  { id: 'food', name: 'אוכל וקניות', icon: '🛒', budget: 2000 },
-  { id: 'bills', name: 'חשבונות ודיור', icon: '🏠', budget: 4000 },
-  { id: 'transport', name: 'תחבורה ודלק', icon: '🚗', budget: 1000 },
-  { id: 'entertainment', name: 'בילויים ופנאי', icon: '🎬', budget: 800 },
-  { id: 'salary', name: 'משכורת והכנסה', icon: '💰', budget: 0 },
-  { id: 'general', name: 'כללי', icon: '📦', budget: 500 }
-];
 
 const PAYMENT_METHODS = [
   { id: 'credit_card', name: 'כרטיס אשראי', icon: '💳' },
@@ -32,27 +24,59 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
 
+  // --- לוגיקת התחברות חברתית (Google / Apple) ---
+  const handleSocialLogin = async (provider) => {
+    setAuthError('');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: provider,
+      options: { 
+        redirectTo: window.location.origin 
+      }
+    });
+    if (error) {
+      setAuthError('שגיאה בהתחברות: ' + error.message);
+    }
+  };
+
   const [transactions, setTransactions] = useState([]);
   
-  // טעינת קטגוריות מותאמות אישית מ-localStorage כדי שלא יימחקו בסגירת האפליקציה
+  // שפת ממשק
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('vault_lang') || 'he';
+  });
+
+  const t = TRANSLATIONS[language] || TRANSLATIONS.he;
+
+  const getInitialCategories = (currentT) => [
+    { id: 'food', name: currentT.categories?.food || 'אוכל וקניות', icon: '🛒', budget: 2000 },
+    { id: 'bills', name: currentT.categories?.bills || 'חשבונות ודיור', icon: '🏠', budget: 4000 },
+    { id: 'transport', name: currentT.categories?.transport || 'תחבורה ודלק', icon: '🚗', budget: 1000 },
+    { id: 'entertainment', name: currentT.categories?.entertainment || 'בילויים ופנאי', icon: '🎬', budget: 800 },
+    { id: 'salary', name: currentT.categories?.salary || 'משכורת והכנסה', icon: '💰', budget: 0 },
+    { id: 'general', name: currentT.categories?.general || 'כללי', icon: '📦', budget: 500 }
+  ];
+
   const [categories, setCategories] = useState(() => {
     const savedCategories = localStorage.getItem('vault_custom_categories');
+    const initialCats = getInitialCategories(t);
     if (savedCategories) {
       try {
-        return JSON.parse(savedCategories);
+        const parsed = JSON.parse(savedCategories);
+        return parsed.map(cat => {
+          const defaultCat = initialCats.find(c => c.id === cat.id);
+          return defaultCat ? { ...cat, name: t.categories[cat.id] || cat.name } : cat;
+        });
       } catch (e) {
         console.error(e);
       }
     }
-    return INITIAL_CATEGORIES;
+    return initialCats;
   });
   
-  // מצב כהה
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('vault_dark_mode') === 'true';
   });
 
-  // טופס הוספה
   const [text, setText] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('expense');
@@ -61,7 +85,6 @@ function App() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [transDate, setTransDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // סינונים וחיפוש
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPaymentFilter, setSelectedPaymentFilter] = useState('all');
@@ -87,7 +110,19 @@ function App() {
     }
   }, [darkMode]);
 
-  // שמירת קטגוריות אוטומטית ב-localStorage בכל שינוי
+  useEffect(() => {
+    localStorage.setItem('vault_lang', language);
+    document.dir = language === 'he' ? 'rtl' : 'ltr';
+    
+    setCategories(prevCats => {
+      const initialCats = getInitialCategories(t);
+      return prevCats.map(cat => {
+        const defaultCat = initialCats.find(c => c.id === cat.id);
+        return defaultCat ? { ...cat, name: t.categories[cat.id] } : cat;
+      });
+    });
+  }, [language]);
+
   useEffect(() => {
     localStorage.setItem('vault_custom_categories', JSON.stringify(categories));
   }, [categories]);
@@ -116,7 +151,7 @@ function App() {
     setAuthError('');
     setAuthSuccess('');
 
-    if (rememberMe) {
+    if (rememberMe && session) {
       await supabase.auth.setSession({ access_token: session?.access_token, refresh_token: session?.refresh_token });
     }
 
@@ -258,7 +293,7 @@ function App() {
   const handleAddRecurringTransactions = async () => {
     const recurringItems = transactions.filter(t => t.is_recurring);
     if (recurringItems.length === 0) {
-      alert('אין תנועות קבועות מוגדרות במערכת. סמן תנועות כ"קבועות" כדי להשתמש בקיצור זה.');
+      alert('אין תנועות קבועות מוגדרות במערכת.');
       return;
     }
 
@@ -329,7 +364,7 @@ function App() {
           ) : (
             <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h2 style={{ fontSize: '18px', color: '#1e1b4b', marginBottom: '5px' }}>יצירת חשבון חדש</h2>
-              <input type="text" placeholder="שם מלא (למשל: דניאל)" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+              <input type="text" placeholder="שם מלא" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
               <input type="email" placeholder="כתובת אימייל" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required />
               <input type="password" placeholder="בחר סיסמה" className="input-field" value={password} onChange={(e) => setPassword(e.target.value)} required />
               <button type="submit" className="submit-btn" style={{ marginTop: '5px', padding: '12px', fontWeight: 'bold' }}>הירשם</button>
@@ -340,6 +375,25 @@ function App() {
               </div>
             </form>
           )}
+
+          {/* כפתורי התחברות חברתית (Google / Apple) */}
+          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '15px' }}>
+            <div style={{ textAlign: 'center', color: '#64748b', fontSize: '12px', marginBottom: '2px' }}>או המשך באמצעות</div>
+            <button 
+              type="button"
+              onClick={() => handleSocialLogin('google')} 
+              style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: '500', color: '#1e293b' }}
+            >
+              🌐 התחבר עם Google
+            </button>
+            <button 
+              type="button"
+              onClick={() => handleSocialLogin('apple')} 
+              style={{ padding: '10px', border: '1px solid #000', borderRadius: '8px', cursor: 'pointer', background: '#000', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontWeight: '500' }}
+            >
+               התחבר עם Apple
+            </button>
+          </div>
 
         </div>
       </div>
@@ -379,7 +433,7 @@ function App() {
         <div className="container">
           <header className="app-header">
             <div>
-              <span className="greeting-sub">שלום רב 👋</span>
+              <span className="greeting-sub">{t.greeting}</span>
               <h2 className="greeting-name" style={{ fontSize: '16px', fontWeight: 'bold', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {userDisplayName}
               </h2>
@@ -391,20 +445,11 @@ function App() {
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', outline: 'none' }}
               >
-                <option value="all" style={{ color: '#333' }}>כל החודשים</option>
+                <option value="all" style={{ color: '#333' }}>{language === 'he' ? 'כל החודשים' : 'All Months'}</option>
                 {availableMonths.map(m => (
                   <option key={m} value={m} style={{ color: '#333' }}>{m}</option>
                 ))}
               </select>
-
-              <button 
-                type="button" 
-                onClick={() => setDarkMode(!darkMode)} 
-                title={darkMode ? "עבור למצב בהיר" : "עבור למצב כהה"}
-                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.4)', color: 'white', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
-              >
-                {darkMode ? '☀️' : '🌙'}
-              </button>
 
               <button 
                 type="button" 
@@ -418,7 +463,7 @@ function App() {
 
           <div className="balance-card-floating">
             <div className="balance-top-row">
-              <span className="balance-label">{selectedMonth === 'all' ? 'יתרת כל הזמנים' : `יתרת חודש ${selectedMonth}`}</span>
+              <span className="balance-label">{selectedMonth === 'all' ? t.allTime : `${t.monthBalance} ${selectedMonth}`}</span>
               <span className="dots-menu">•••</span>
             </div>
             <h1 className="balance-amount">₪{total}</h1>
@@ -426,7 +471,7 @@ function App() {
               <div className="stat-item">
                 <span className="stat-icon-wrapper income-icon">⬇</span>
                 <div>
-                  <span className="stat-title">הכנסות</span>
+                  <span className="stat-title">{t.income}</span>
                   <p className="stat-val income">+₪{income}</p>
                 </div>
               </div>
@@ -434,7 +479,7 @@ function App() {
               <div className="stat-item">
                 <span className="stat-icon-wrapper expense-icon">⬆</span>
                 <div>
-                  <span className="stat-title">הוצאות</span>
+                  <span className="stat-title">{t.expense}</span>
                   <p className="stat-val expense">-₪{expense}</p>
                 </div>
               </div>
@@ -447,9 +492,9 @@ function App() {
         {activeTab === 'home' && (
           <>
             <div className="section-header">
-              <h3>סיכום הוצאות לפי קטגוריות</h3>
+              <h3>{t.categoriesTitle}</h3>
               <button type="button" onClick={() => setShowCategoryModal(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
-                + הוסף קטגוריה
+                {t.addCategory}
               </button>
             </div>
             
@@ -474,34 +519,34 @@ function App() {
             </div>
 
             <div className="section-header" style={{ marginTop: '24px' }}>
-              <h3>תנועות אחרונות</h3>
-              <span className="see-all" onClick={() => setActiveTab('analytics')}>הצג הכל</span>
+              <h3>{t.recentTransactions}</h3>
+              <span className="see-all" onClick={() => setActiveTab('analytics')}>{t.seeAll}</span>
             </div>
             {monthFilteredTransactions.length === 0 ? (
-              <p className="empty-msg">אין עדיין תנועות בחודש זה</p>
+              <p className="empty-msg">{t.noTransactions}</p>
             ) : (
               <ul className="bank-list">
-                {monthFilteredTransactions.slice(0, 5).map((t) => {
-                  const catObj = categories.find((c) => c.id === (t.category || 'general'));
-                  const pmObj = PAYMENT_METHODS.find((p) => p.id === t.paymentMethod);
+                {monthFilteredTransactions.slice(0, 5).map((tItem) => {
+                  const catObj = categories.find((c) => c.id === (tItem.category || 'general'));
+                  const pmObj = PAYMENT_METHODS.find((p) => p.id === tItem.paymentMethod);
                   return (
-                    <li key={t.id} className="bank-item">
+                    <li key={tItem.id} className="bank-item">
                       <div className="bank-left">
                         <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
                         <div className="bank-details">
                           <span className="bank-text">
-                            {t.text} {t.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>קבוע 🔄</span>}
+                            {tItem.text} {tItem.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>{t.recurringBadge}</span>}
                           </span>
                           <span className="bank-subtext">
-                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {t.date}
+                            {catObj ? catObj.name : t.general} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {tItem.date}
                           </span>
                         </div>
                       </div>
                       <div className="bank-right">
-                        <span className={`bank-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
-                          {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount).toFixed(2)}
+                        <span className={`bank-amount ${tItem.amount < 0 ? 'text-expense' : 'text-income'}`}>
+                          {tItem.amount < 0 ? '-' : '+'}₪{Math.abs(tItem.amount).toFixed(2)}
                         </span>
-                        <button onClick={() => deleteTransaction(t.id)} className="delete-btn">🗑️</button>
+                        <button onClick={() => deleteTransaction(tItem.id)} className="delete-btn">🗑️</button>
                       </div>
                     </li>
                   );
@@ -515,16 +560,16 @@ function App() {
           <div className="analytics-view">
             <div className="history-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                <h3>חיפוש וסינון מתקדם</h3>
+                <h3>{t.advancedSearch}</h3>
                 <button type="button" onClick={handleAddRecurringTransactions} style={{ background: '#ede9fe', color: '#7c3aed', border: '1px solid #c4b5fd', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
-                  🔄 טען תנועות קבועות לחודש
+                  {t.loadRecurring}
                 </button>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
                 <input 
                   type="text" 
-                  placeholder="🔍 חפש לפי תיאור..." 
+                  placeholder={t.searchPlaceholder} 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="input-field"
@@ -537,7 +582,7 @@ function App() {
                   className="input-field select-field"
                   style={{ flex: '1', minWidth: '130px', padding: '8px', fontSize: '13px', margin: 0 }}
                 >
-                  <option value="all">כל אמצעי התשלום</option>
+                  <option value="all">{t.allPaymentMethods}</option>
                   {PAYMENT_METHODS.map(pm => (
                     <option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>
                   ))}
@@ -557,42 +602,42 @@ function App() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '10px' }}>
               <h3 style={{ fontSize: '15px' }}>
-                תוצאות סינון ({finalFilteredTransactions.length} פריטים)
+                {t.filterResults} ({finalFilteredTransactions.length} {t.items})
               </h3>
               {(selectedCategoryFilter !== 'all' || searchQuery || selectedPaymentFilter !== 'all') && (
                 <button onClick={() => { setSelectedCategoryFilter('all'); setSearchQuery(''); setSelectedPaymentFilter('all'); }} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
-                  איפוס סינונים
+                  {t.resetFilters}
                 </button>
               )}
             </div>
             
             {finalFilteredTransactions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px', borderRadius: '12px', color: '#64748b', fontSize: '14px' }}>
-                לא נמצאו תנועות העונות על הקריטריונים
+                {t.noResults}
               </div>
             ) : (
               <ul className="bank-list">
-                {finalFilteredTransactions.map((t) => {
-                  const catObj = categories.find((c) => c.id === (t.category || 'general'));
-                  const pmObj = PAYMENT_METHODS.find((p) => p.id === t.paymentMethod);
+                {finalFilteredTransactions.map((tItem) => {
+                  const catObj = categories.find((c) => c.id === (tItem.category || 'general'));
+                  const pmObj = PAYMENT_METHODS.find((p) => p.id === tItem.paymentMethod);
                   return (
-                    <li key={t.id} className="bank-item">
+                    <li key={tItem.id} className="bank-item">
                       <div className="bank-left">
                         <div className="bank-icon-bg">{catObj ? catObj.icon : '📦'}</div>
                         <div className="bank-details">
                           <span className="bank-text">
-                            {t.text} {t.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>קבוע 🔄</span>}
+                            {tItem.text} {tItem.isRecurring && <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px', marginRight: '5px' }}>{t.recurringBadge}</span>}
                           </span>
                           <span className="bank-subtext">
-                            {catObj ? catObj.name : 'כללי'} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {t.date}
+                            {catObj ? catObj.name : t.general} {pmObj ? `• ${pmObj.icon} ${pmObj.name}` : ''} • {tItem.date}
                           </span>
                         </div>
                       </div>
                       <div className="bank-right">
-                        <span className={`bank-amount ${t.amount < 0 ? 'text-expense' : 'text-income'}`}>
-                          {t.amount < 0 ? '-' : '+'}₪{Math.abs(t.amount).toFixed(2)}
+                        <span className={`bank-amount ${tItem.amount < 0 ? 'text-expense' : 'text-income'}`}>
+                          {tItem.amount < 0 ? '-' : '+'}₪{Math.abs(tItem.amount).toFixed(2)}
                         </span>
-                        <button onClick={() => deleteTransaction(t.id)} className="delete-btn">🗑️</button>
+                        <button onClick={() => deleteTransaction(tItem.id)} className="delete-btn">🗑️</button>
                       </div>
                     </li>
                   );
@@ -607,12 +652,30 @@ function App() {
             <div className="profile-avatar-large">👤</div>
             <h2>{userDisplayName}</h2>
             <p className="profile-email">{session.user.email}</p>
-            <div className="profile-settings-list" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            
+            <div className="profile-settings-list" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'start' }}>
+                <label style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-main)' }}>{t.language}:</label>
+                <select 
+                  value={language} 
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="input-field select-field"
+                  style={{ width: '100%', padding: '10px', fontSize: '14px', margin: 0 }}
+                >
+                  <option value="he">🇮🇱 עברית</option>
+                  <option value="en">🇺🇸 English</option>
+                  <option value="es">🇪🇸 Español</option>
+                  <option value="ru">🇷🇺 Русский</option>
+                </select>
+              </div>
+
               <button type="button" onClick={() => setDarkMode(!darkMode)} style={{ width: '100%', background: 'var(--card-bg)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-                {darkMode ? '☀️ מצב בהיר' : '🌙 מצב כהה'}
+                {darkMode ? `☀️ ${t.lightMode}` : `🌙 ${t.darkMode}`}
               </button>
+
               <button type="button" onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-                🚪 התנתק מהמערכת
+                🚪 {t.logout}
               </button>
             </div>
           </div>
@@ -623,16 +686,14 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowUpdatesModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div className="modal-header">
-              <h3>📢 עדכונים חדשים (Vault v2.1)</h3>
+              <h3>{t.updatesTitle}</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowUpdatesModal(false)}>✕</button>
             </div>
             <div style={{ padding: '10px 0', fontSize: '14px', lineHeight: '1.6' }}>
               <div style={{ padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid var(--border-color)' }}>
                 <strong style={{ color: '#7c3aed' }}>שדרוגים חדשים במערכת:</strong>
                 <p style={{ margin: '5px 0 0 0', fontSize: '13px' }}>
-                  • 🌙 <strong>מצב כהה (Dark Mode):</strong> תמיכה מלאה בעיצוב כהה לעיניים, נשמר אוטומטית במכשיר.<br/>
-                  • 📅 <strong>בורר חודשים:</strong> מעבר נוח בין סיכומים של חודשים שונים.<br/>
-                  • 🎯 <strong>סיכום קטגוריות נקי:</strong> הצגת סכום ההוצאות לכל קטגוריה לצמיתות.
+                  • 🌍 <strong>החלפת שפות:</strong> תמיכה מלאה בעברית, אנגלית, ספרדית ורוסית כולל שמות הקטגוריות.
                 </p>
               </div>
             </div>
@@ -644,7 +705,7 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>הוספת פעולה חדשה</h3>
+              <h3>{t.addTransactionTitle}</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowAddModal(false)}>✕</button>
             </div>
             
@@ -655,21 +716,21 @@ function App() {
             )}
 
             <form onSubmit={addTransaction} className="form-group">
-              <input type="text" className="input-field" placeholder="תיאור (למשל: סופרמרקט, נטפליקס)" value={text} onChange={(e) => setText(e.target.value)} autoFocus />
-              <input type="number" step="any" className="input-field" placeholder="סכום (₪)" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <input type="text" className="input-field" placeholder={t.descPlaceholder} value={text} onChange={(e) => setText(e.target.value)} autoFocus />
+              <input type="number" step="any" className="input-field" placeholder={t.amountPlaceholder} value={amount} onChange={(e) => setAmount(e.target.value)} />
 
               <div className="radio-group">
-                <button type="button" className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`} onClick={() => setType('expense')}>הוצאה</button>
-                <button type="button" className={`type-btn ${type === 'income' ? 'active-income' : ''}`} onClick={() => setType('income')}>הכנסה</button>
+                <button type="button" className={`type-btn ${type === 'expense' ? 'active-expense' : ''}`} onClick={() => setType('expense')}>{t.expenseBtn}</button>
+                <button type="button" className={`type-btn ${type === 'income' ? 'active-income' : ''}`} onClick={() => setType('income')}>{t.incomeBtn}</button>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>תאריך התנועה:</label>
+                <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.transDateLabel}</label>
                 <input type="date" className="input-field" value={transDate} onChange={(e) => setTransDate(e.target.value)} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>בחר קטגוריה:</label>
+                <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.categoryLabel}</label>
                 <select className="input-field select-field" value={category} onChange={(e) => setCategory(e.target.value)}>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
@@ -678,7 +739,7 @@ function App() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '500' }}>אמצעי תשלום:</label>
+                <label style={{ fontSize: '13px', fontWeight: '500' }}>{t.paymentMethodLabel}</label>
                 <select className="input-field select-field" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                   {PAYMENT_METHODS.map((pm) => (
                     <option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>
@@ -688,10 +749,10 @@ function App() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', marginTop: '5px' }}>
                 <input type="checkbox" id="recurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#7c3aed', cursor: 'pointer' }} />
-                <label htmlFor="recurring" style={{ cursor: 'pointer' }}>תנועה קבועה חודשית (הוראת קבע)</label>
+                <label htmlFor="recurring" style={{ cursor: 'pointer' }}>{t.recurringCheckbox}</label>
               </div>
 
-              <button type="submit" className="submit-btn" style={{ marginTop: '10px' }}>שמור פעולה</button>
+              <button type="submit" className="submit-btn" style={{ marginTop: '10px' }}>{t.saveAction}</button>
             </form>
           </div>
         </div>
@@ -701,14 +762,14 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowCategoryModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>הוספת קטגוריה חדשה</h3>
+              <h3>{t.newCategoryTitle}</h3>
               <button type="button" className="close-modal-btn" onClick={() => setShowCategoryModal(false)}>✕</button>
             </div>
             <form onSubmit={handleAddCategory} className="form-group">
-              <input type="text" className="input-field" placeholder="שם הקטגוריה (למשל: חיות מחמד)" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus required />
-              <input type="text" className="input-field" placeholder="אייקון או אימוג'י (למשל: 🐱)" value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} maxLength={4} />
-              <input type="number" className="input-field" placeholder="תקציב חודשי מקסימלי (₪) - אופציונלי" value={newCatBudget} onChange={(e) => setNewCatBudget(e.target.value)} />
-              <button type="submit" className="submit-btn">צור קטגוריה</button>
+              <input type="text" className="input-field" placeholder={t.catNamePlaceholder} value={newCatName} onChange={(e) => setNewCatName(e.target.value)} autoFocus required />
+              <input type="text" className="input-field" placeholder={t.catIconPlaceholder} value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} maxLength={4} />
+              <input type="number" className="input-field" placeholder={t.catBudgetPlaceholder} value={newCatBudget} onChange={(e) => setNewCatBudget(e.target.value)} />
+              <button type="submit" className="submit-btn">{t.createCatBtn}</button>
             </form>
           </div>
         </div>
@@ -717,7 +778,7 @@ function App() {
       <nav className="bottom-nav">
         <button type="button" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span className="nav-text">פרופיל</span>
+          <span className="nav-text">{t.profile}</span>
         </button>
 
         <button 
@@ -729,7 +790,7 @@ function App() {
           }}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-          <span className="nav-text">ארנק</span>
+          <span className="nav-text">{t.wallet}</span>
         </button>
 
         <div className="nav-center-btn-wrapper">
@@ -738,12 +799,12 @@ function App() {
 
         <button type="button" className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`} onClick={() => setActiveTab('analytics')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-          <span className="nav-text">ניתוח</span>
+          <span className="nav-text">{t.analytics}</span>
         </button>
 
         <button type="button" className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          <span className="nav-text">בית</span>
+          <span className="nav-text">{t.home}</span>
         </button>
       </nav>
     </div>
